@@ -15,6 +15,9 @@ class ForumPostsAdapter(
     private val onClick: (ForumPost) -> Unit
 ) : RecyclerView.Adapter<ForumPostsAdapter.PostViewHolder>() {
 
+    private val supabaseForum by lazy { SupabaseForumService(itemViewContext) }
+    private lateinit var itemViewContext: android.content.Context
+
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvTitle: TextView = itemView.findViewById(R.id.tvTitle)
         val tvContent: TextView = itemView.findViewById(R.id.tvContent)
@@ -25,6 +28,7 @@ class ForumPostsAdapter(
         val tvTime: TextView = itemView.findViewById(R.id.tvTime)
         val tvCategory: TextView = itemView.findViewById(R.id.tvCategory)
         val tvTags: TextView = itemView.findViewById(R.id.tvTags)
+        val ivThumb: ImageView = itemView.findViewById(R.id.ivThumbnail)
         val btnLike: ImageView = itemView.findViewById(R.id.btnLike)
         val btnBookmark: ImageView = itemView.findViewById(R.id.btnBookmark)
         val btnReport: ImageView = itemView.findViewById(R.id.btnReport)
@@ -34,6 +38,7 @@ class ForumPostsAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_forum_post_enhanced, parent, false)
+        itemViewContext = parent.context
         return PostViewHolder(view)
     }
 
@@ -51,6 +56,28 @@ class ForumPostsAdapter(
         holder.tvLikes.text = "${post.likeCount}"
         holder.tvViews.text = "${post.viewCount}"
         
+        // Thumbnail (basic public URL handling)
+        holder.ivThumb.visibility = View.GONE
+        holder.ivThumb.visibility = View.GONE
+        val urlField = post.attachments.firstOrNull()
+        if (!urlField.isNullOrBlank()) {
+            if (urlField.startsWith("file:") || urlField.startsWith("content:")) {
+                holder.ivThumb.visibility = View.VISIBLE
+                holder.ivThumb.setImageURI(android.net.Uri.parse(urlField))
+            } else if (urlField.startsWith("http")) {
+                holder.ivThumb.visibility = View.VISIBLE
+                // Use simple WebView to render public image if Bitmap fetch fails (no 3rd party libs)
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val bmp = android.graphics.BitmapFactory.decodeStream(java.net.URL(urlField).openStream())
+                        withContext(Dispatchers.Main) { holder.ivThumb.setImageBitmap(bmp) }
+                    } catch (_: Exception) {
+                        withContext(Dispatchers.Main) { holder.ivThumb.visibility = View.GONE }
+                    }
+                }
+            }
+        }
+
         // Category and tags
         holder.tvCategory.text = post.category
         if (post.tags.isNotEmpty()) {
@@ -68,14 +95,15 @@ class ForumPostsAdapter(
         holder.btnLike.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    val result = forumManager.toggleLike(post.id)
+                    val result = supabaseForum.toggleLikePost(post.id)
                     if (result.isSuccess) {
                         val isLiked = result.getOrNull() ?: false
                         holder.btnLike.setImageResource(
                             if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off
                         )
                         // Update like count
-                        holder.tvLikes.text = "${post.likeCount + if (isLiked) 1 else -1}"
+                        val base = holder.tvLikes.text.toString().toIntOrNull() ?: 0
+                        holder.tvLikes.text = "${base + if (isLiked) 1 else -1}"
                     }
                 } catch (e: Exception) {
                     android.widget.Toast.makeText(holder.itemView.context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
@@ -87,7 +115,7 @@ class ForumPostsAdapter(
         holder.btnBookmark.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    val result = forumManager.toggleBookmark(post.id)
+                    val result = supabaseForum.toggleBookmarkPost(post.id)
                     if (result.isSuccess) {
                         val isBookmarked = result.getOrNull() ?: false
                         holder.btnBookmark.setImageResource(
@@ -100,9 +128,19 @@ class ForumPostsAdapter(
             }
         }
         
-        // Report button
-        holder.btnReport.setOnClickListener {
-            showReportDialog(holder.itemView.context, post)
+        // Report / Edit / Delete via long press menu
+        holder.btnReport.setOnClickListener { showReportDialog(holder.itemView.context, post) }
+        holder.itemView.setOnLongClickListener {
+            val items = arrayOf("Edit", "Delete", "Report")
+            androidx.appcompat.app.AlertDialog.Builder(holder.itemView.context)
+                .setItems(items) { _, which ->
+                    when (which) {
+                        0 -> showEditPostDialog(holder.itemView.context, post)
+                        1 -> confirmDeletePost(holder.itemView.context, post)
+                        2 -> showReportDialog(holder.itemView.context, post)
+                    }
+                }.show()
+            true
         }
         
         // Main click listener
@@ -171,10 +209,64 @@ class ForumPostsAdapter(
             .show()
     }
 
+    private fun showEditPostDialog(context: android.content.Context, post: ForumPost) {
+        val dialog = android.widget.LinearLayout(context).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(32,16,32,0) }
+        val etTitle = android.widget.EditText(context).apply { setText(post.title) }
+        val etBody = android.widget.EditText(context).apply { setText(post.content) }
+        dialog.addView(etTitle); dialog.addView(etBody)
+
+        androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("Edit Post")
+            .setView(dialog)
+            .setPositiveButton("Save") { _, _ ->
+                CoroutineScope(Dispatchers.Main).launch {
+                    val service = SupabaseForumService(context)
+                    val res = service.editPost(post.id, etTitle.text.toString().trim(), etBody.text.toString().trim())
+                    if (res.isSuccess) {
+                        val idx = adapterPositionSafe(post)
+                        if (idx >= 0) {
+                            val updated = post.copy(
+                                title = etTitle.text.toString().trim(),
+                                content = etBody.text.toString().trim()
+                            )
+                            posts[idx] = updated
+                            notifyItemChanged(idx)
+                        }
+                    } else android.widget.Toast.makeText(context, "Edit failed", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null).show()
+    }
+
+    private fun confirmDeletePost(context: android.content.Context, post: ForumPost) {
+        androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("Delete Post")
+            .setMessage("Are you sure you want to delete this post?")
+            .setPositiveButton("Delete") { _, _ ->
+                CoroutineScope(Dispatchers.Main).launch {
+                    val service = SupabaseForumService(context)
+                    val res = service.deletePost(post.id)
+                    if (res.isSuccess) {
+                        val idx = adapterPositionSafe(post)
+                        if (idx >= 0) { posts.removeAt(idx); notifyItemRemoved(idx) }
+                    } else android.widget.Toast.makeText(context, "Delete failed", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null).show()
+    }
+
+    private fun adapterPositionSafe(post: ForumPost): Int = posts.indexOfFirst { it.id == post.id }
+
     fun updateItems(newItems: List<ForumPost>) {
         posts.clear()
         posts.addAll(newItems)
         notifyDataSetChanged()
+    }
+
+    fun appendItems(moreItems: List<ForumPost>) {
+        val start = posts.size
+        posts.addAll(moreItems)
+        notifyItemRangeInserted(start, moreItems.size)
     }
 }
 

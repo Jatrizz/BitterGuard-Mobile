@@ -120,6 +120,16 @@
             android:textSize="14sp"
             android:layout_marginBottom="8dp" />
 
+        <!-- Optional Thumbnail -->
+        <ImageView
+            android:id="@+id/ivThumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp" />
+
         <!-- Tags -->
         <TextView
             android:id="@+id/tvTags"

@@ -8,6 +8,10 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 
 /**
  * Image Storage Manager - Handles different types of image storage
@@ -93,34 +97,39 @@ class ImageStorageManager(private val context: Context) {
      * Upload forum image to Supabase Storage
      * These images are public and can be shared in forum posts
      */
-    suspend fun uploadForumImageToSupabase(imageUri: Uri, fileName: String? = null): Result<String> {
+    suspend fun uploadForumImageToSupabase(imageUri: Uri, fileName: String? = null, accessToken: String, userId: String): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
                 val finalFileName = fileName ?: "forum_${System.currentTimeMillis()}.jpg"
-                
-                // For now, we'll store locally and return a local path
-                // In production, you'd upload to Supabase Storage
-                val forumDir = File(context.filesDir, FORUM_IMAGES_DIR)
-                if (!forumDir.exists()) {
-                    forumDir.mkdirs()
+
+                // Read bytes from URI
+                val bytes = context.contentResolver.openInputStream(imageUri)?.use(InputStream::readBytes)
+                    ?: return@withContext Result.failure(Exception("Unable to read image"))
+
+                val client = OkHttpClient()
+                val bucketId = "forum_images" // existing bucket
+                val objectPath = "$userId/$finalFileName"
+                val url = "${SupabaseConfig.PROJECT_URL}/storage/v1/object/$bucketId/$objectPath"
+
+                val mediaType = "image/jpeg".toMediaType()
+                val req = Request.Builder()
+                    .url(url)
+                    .post(bytes.toRequestBody(mediaType))
+                    .addHeader("Authorization", "Bearer $accessToken")
+                    .addHeader("apikey", SupabaseConfig.API_KEY)
+                    .build()
+
+                val resp = client.newCall(req).execute()
+                val bodyStr = resp.body?.string() ?: ""
+                if (!resp.isSuccessful) {
+                    Log.e(TAG, "Upload failed: ${resp.code} $bodyStr")
+                    return@withContext Result.failure(Exception("Upload failed ${resp.code}"))
                 }
-                
-                val imageFile = File(forumDir, finalFileName)
-                
-                context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
-                    FileOutputStream(imageFile).use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                }
-                
-                // Return the file path (in production, this would be a Supabase URL)
-                val imageUrl = "file://${imageFile.absolutePath}"
-                Log.d(TAG, "Forum image uploaded: $imageUrl")
-                Result.success(imageUrl)
-                
-                // TODO: Implement actual Supabase Storage upload
-                // val supabaseUrl = SupabaseManager.storage.from("forum-images").upload(finalFileName, imageFile)
-                // Result.success(supabaseUrl)
+
+                // If bucket is public, expose via public endpoint
+                val publicUrl = "${SupabaseConfig.PROJECT_URL}/storage/v1/object/public/$bucketId/$objectPath"
+                Log.d(TAG, "Forum image uploaded: $publicUrl")
+                Result.success(publicUrl)
                 
             } catch (e: Exception) {
                 Log.e(TAG, "Error uploading forum image: ${e.message}", e)

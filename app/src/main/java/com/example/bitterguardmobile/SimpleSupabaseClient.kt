@@ -72,6 +72,35 @@ class SimpleSupabaseClient {
             Result.failure(e)
         }
     }
+
+    /**
+     * GET with user auth token (for RLS-protected selects)
+     */
+    suspend fun getWithUserAuth(table: String, filters: Map<String, String> = emptyMap(), authToken: String): Result<String> {
+        return try {
+            val urlBuilder = "$BASE_URL$table".toHttpUrl().newBuilder()
+            filters.forEach { (key, value) -> urlBuilder.addQueryParameter(key, value) }
+
+            val request = Request.Builder()
+                .url(urlBuilder.build())
+                .get()
+                .header("Authorization", "Bearer $authToken")
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: ""
+            if (response.isSuccessful) {
+                Log.d(TAG, "GET (user) $table successful: $responseBody")
+                Result.success(responseBody)
+            } else {
+                Log.e(TAG, "GET (user) $table failed: ${response.code} - $responseBody")
+                Result.failure(Exception("HTTP ${response.code}: $responseBody"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "GET (user) $table error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
     
     /**
      * POST request to Supabase
@@ -219,6 +248,75 @@ class SimpleSupabaseClient {
             }
         } catch (e: Exception) {
             Log.e(TAG, "DELETE $table error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * PATCH arbitrary path with user auth
+     */
+    suspend fun patch(pathWithQuery: String, data: JsonObject, authToken: String): Result<String> {
+        return try {
+            val jsonString = json.encodeToString(JsonObject.serializer(), data)
+            val requestBody = jsonString.toRequestBody("application/json".toMediaType())
+
+            val request = Request.Builder()
+                .url(pathWithQuery)
+                .patch(requestBody)
+                .header("Authorization", "Bearer $authToken")
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: ""
+            if (response.isSuccessful) Result.success(responseBody)
+            else Result.failure(Exception("HTTP ${response.code}: $responseBody"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Call a Postgres function (RPC) via REST: /rest/v1/rpc/{fn}
+     */
+    suspend fun postRpc(functionName: String, payload: JsonObject, authToken: String? = null): Result<String> {
+        return try {
+            val jsonString = json.encodeToString(JsonObject.serializer(), payload)
+            val requestBody = jsonString.toRequestBody("application/json".toMediaType())
+
+            val builder = Request.Builder()
+                .url("${SupabaseConfig.REST_URL}rpc/$functionName")
+                .post(requestBody)
+            if (authToken != null) builder.header("Authorization", "Bearer $authToken")
+
+            val request = builder.build()
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: ""
+            if (response.isSuccessful) {
+                Log.d(TAG, "RPC $functionName successful: $responseBody")
+                Result.success(responseBody)
+            } else {
+                Log.e(TAG, "RPC $functionName failed: ${response.code} - $responseBody")
+                Result.failure(Exception("HTTP ${response.code}: $responseBody"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "RPC $functionName error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * DELETE with query (already formed path) and optional auth header
+     */
+    suspend fun deleteByUrl(pathWithQuery: String, authToken: String? = null): Result<String> {
+        return try {
+            val builder = Request.Builder().url(pathWithQuery).delete()
+            if (authToken != null) builder.header("Authorization", "Bearer $authToken")
+            val request = builder.build()
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: ""
+            if (response.isSuccessful) Result.success(responseBody)
+            else Result.failure(Exception("HTTP ${response.code}: $responseBody"))
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
