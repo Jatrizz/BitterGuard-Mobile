@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="true" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+    <application
+        android:name=".BitterGuardApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.BitterGuardMobile"
+        tools:targetApi="31">
+
+        <!-- Splash Activity is now the launcher -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.BitterGuardMobile">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <!-- Authentication Activities -->
+
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <!-- Home Activity -->
+        <activity
+            android:name=".HomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <!-- Tool Activities -->
+        <activity
+            android:name=".ScanLeafActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".ViewHistoryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".ConfigActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".TranslationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".DiseaseInfoActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".TreatmentGuideActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <!-- Navigation Activities -->
+        <activity
+            android:name=".ForumActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".ForumModerationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".ForumNotificationsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".ForumBookmarksActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+        
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+
+        <activity
+            android:name=".HelpSupportActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+
+        <!-- Onboarding Activity -->
+        <activity
+            android:name=".OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <!-- Scan Result Activity -->
+        <activity
+            android:name=".ScanResultActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <!-- Camera Activity -->
+        <activity
+            android:name=".CameraActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <!-- About Activity -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitterGuardMobile" />
+
+        <!-- FileProvider for full-size camera capture -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

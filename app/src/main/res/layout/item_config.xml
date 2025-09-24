@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/rounded_input_outline"
+    android:backgroundTint="@android:color/white">
+
+    <!-- Config Name -->
+    <TextView
+        android:id="@+id/configName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Config Name"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary_green"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Config Type -->
+    <TextView
+        android:id="@+id/configType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TEXT"
+        android:textSize="12sp"
+        android:textColor="@color/text_secondary"
+        android:background="@drawable/rounded_button"
+        android:backgroundTint="@color/light_gray"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="2dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Config Value Input -->
+    <EditText
+        android:id="@+id/configValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Config Value"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:singleLine="true"
+        android:imeOptions="actionDone" />
+
+</LinearLayout>

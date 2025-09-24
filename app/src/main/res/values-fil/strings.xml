@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BitterGuard Mobile</string>
+    
+    <!-- Main Activity -->
+    <string name="welcome_message">Maligayang pagdating sa BitterGuard</string>
+    <string name="scan_leaf">I-scan ang Dahon</string>
+    <string name="view_history">Tingnan ang Kasaysayan</string>
+    <string name="disease_info">Impormasyon sa Sakit</string>
+    <string name="continue_as_guest">Magpatuloy bilang Bisita</string>
+    <string name="login_with_phone">Mag-login gamit ang Telepono</string>
+    <string name="login_with_google">Mag-login gamit ang Google</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Tuklasin ang mga Sakit ng Ampalaya</string>
+    <string name="onboarding_desc_1">Gamit ang teknolohiyang AI, madali nating matutukoy ang mga sakit na nakakaapekto sa iyong mga halaman ng ampalaya</string>
+    <string name="onboarding_title_2">Kumuha ng Larawan</string>
+    <string name="onboarding_desc_2">I-scan ang mga dahon ng ampalaya para sa instant na diagnosis at mga rekomendasyon sa paggamot</string>
+    <string name="onboarding_title_3">Sundin ang mga Rekomendasyon</string>
+    <string name="onboarding_desc_3">Kumuha ng detalyadong impormasyon tungkol sa mga sakit at kung paano gamutin ang mga ito</string>
+    <string name="get_started">Magsimula</string>
+    <string name="skip">Laktawan</string>
+    
+    <!-- Phone Login -->
+    <string name="phone_login_title">Mag-login gamit ang Telepono</string>
+    <string name="enter_phone">Ilagay ang numero ng telepono</string>
+    <string name="send_otp">Ipadala ang OTP</string>
+    <string name="enter_otp">Ilagay ang OTP</string>
+    <string name="verify_otp">I-verify ang OTP</string>
+    <string name="resend_otp">Ipadala ulit ang OTP</string>
+    <string name="back_to_login">Bumalik sa Login</string>
+    
+    <!-- Homepage -->
+    <string name="home" translatable="false">Home</string>
+    <string name="scan">I-scan</string>
+    <string name="history">Kasaysayan</string>
+    <string name="profile">Profile</string>
+    <string name="welcome_home">Maligayang pagdating!</string>
+    <string name="scan_leaf_now">I-scan ang dahon ngayon</string>
+    <string name="recent_scans">Mga kamakailang scan</string>
+    <string name="no_recent_scans">Walang kamakailang scan</string>
+    
+    <!-- Camera/Scan -->
+    <string name="take_photo">Kumuha ng Larawan</string>
+    <string name="choose_from_gallery">Pumili mula sa Gallery</string>
+    <string name="analyzing">Sinusuri...</string>
+    <string name="scan_result">Resulta ng Scan</string>
+    <string name="scan_leaf_desc">Kumuha ng larawan o pumili mula sa gallery para i-scan ang mga sakit</string>
+    <string name="camera_preview">Preview ng Camera</string>
+    <string name="position_leaf">Iposisyon ang dahon sa frame</string>
+    <string name="instructions_title">📋 Mga Tagubilin</string>
+    <string name="instruction_lighting">• Siguraduhing may magandang ilaw</string>
+    <string name="instruction_surface">• Ilagay ang dahon sa malinis na ibabaw</string>
+    <string name="instruction_steady">• Panatilihing matatag ang camera</string>
+    <string name="instruction_capture">• Kunin ang buong dahon</string>
+    <string name="scan_diseases">🔍 I-scan ang mga Sakit</string>
+    <string name="select_image_first">Mangyaring pumili muna ng larawan</string>
+    <string name="permission_required">Kailangan ng Pahintulot</string>
+    <string name="camera_permission_denied">Kailangan ang pahintulot ng camera para kumuha ng mga larawan</string>
+    <string name="gallery_permission_denied">Kailangan ang pahintulot ng gallery para pumili ng mga larawan</string>
+    <string name="settings">Mga Setting</string>
+    
+    <!-- Disease Names -->
+    <string name="fusarium_wilt">Fusarium Wilt</string>
+    <string name="downy_mildew">Downy Mildew</string>
+    <string name="mosaic_virus">Mosaic Virus</string>
+    <string name="healthy_plant">Malusog na Halaman</string>
+    
+    <!-- Disease Descriptions -->
+    <string name="fusarium_wilt_desc">Isang fungal disease na nagdudulot ng pag-yellow at pag-laylay ng mga dahon, na sa huli ay humahantong sa pagkamatay ng halaman</string>
+    <string name="downy_mildew_desc">Isang fungal disease na lumilitaw bilang mga dilaw na spot sa itaas na bahagi ng dahon na may puti hanggang kulay abong paglago sa ilalim</string>
+    <string name="mosaic_virus_desc">Isang viral disease na nagdudulot ng mottled, distorted na mga dahon na may irregular na pattern ng light at dark green</string>
+    <string name="healthy_plant_desc">Ang halaman ay malusog at walang sakit</string>
+    
+    <!-- Severity Levels -->
+    <string name="severity_high">Kalubhaan: Mataas</string>
+    <string name="severity_medium">Kalubhaan: Katamtaman</string>
+    <string name="severity_low">Kalubhaan: Mababa</string>
+    <string name="severity_none">Walang sakit</string>
+    
+    <!-- Treatment -->
+    <string name="treatment">Paggamot</string>
+    <string name="treatment_guide">Gabay sa Paggamot</string>
+    <string name="treatment_guide_desc">Mga komprehensibong paraan ng paggamot at pag-iwas sa mga sakit ng ampalaya</string>
+    <string name="treatment_recommendations">Mga rekomendasyon sa paggamot</string>
+    <string name="prevention_tips">Mga tip sa pag-iwas</string>
+    
+    <!-- History -->
+    <string name="scan_history">Kasaysayan ng Scan</string>
+    <string name="date">Petsa</string>
+    <string name="time">Oras</string>
+    <string name="location">Lokasyon</string>
+    <string name="confidence">Kumpiyansa</string>
+    <string name="prediction">Prediksyon</string>
+    <string name="no_history">Walang kasaysayan</string>
+    
+    <!-- Disease Info -->
+    <string name="disease_information">Impormasyon sa Sakit</string>
+    <string name="search_diseases">Maghanap ng mga sakit...</string>
+    <string name="common_diseases">Mga Karaniwang Sakit ng Ampalaya</string>
+    <string name="prevention_tips_title">Mga Tip sa Pag-iwas</string>
+    <string name="prevention_tip_1">• Panatilihin ang tamang distansya sa pagitan ng mga halaman</string>
+    <string name="prevention_tip_2">• Magdilig sa base, iwasan ang pagbasa ng mga dahon</string>
+    <string name="prevention_tip_3">• Tanggalin agad ang mga nahawaang bahagi ng halaman</string>
+    <string name="prevention_tip_4">• Gumamit ng mga uri na lumalaban sa sakit</string>
+    
+    <!-- Admin/Analytics -->
+    <string name="admin_panel">Admin Panel</string>
+    <string name="analytics">Analytics</string>
+    <string name="total_scans">Kabuuang mga Scan</string>
+    <string name="disease_distribution">Distribusyon ng Sakit</string>
+    <string name="scan_trends">Mga Trend ng Scan</string>
+    
+    <!-- Settings -->
+    <string name="language">Wika</string>
+    <string name="english">English</string>
+    <string name="filipino">Filipino</string>
+    <string name="notifications">Mga Notipikasyon</string>
+    <string name="about">Tungkol</string>
+    <string name="logout">Mag-logout</string>
+    
+    <!-- About -->
+    <string name="version_format">Version %s</string>
+    <string name="about_description">Ang BitterGuard Mobile ay isang AI-powered na aplikasyon na idinisenyo upang tulungan ang mga magsasakang Filipino na matukoy at pamahalaan ang mga sakit sa mga halaman ng ampalaya. Gamit ang advanced na machine learning technology, ang app ay nagbibigay ng instant na disease detection at treatment recommendations.</string>
+    <string name="features_title">Mga Pangunahing Feature</string>
+    <string name="features_list">• AI-powered na disease detection\n• Instant na scan results\n• Treatment recommendations\n• Disease information database\n• Scan history tracking\n• Multi-language support</string>
+    <string name="contact_title">Impormasyon sa Contact</string>
+    <string name="contact_info">Para sa suporta at mga inquiry:\nEmail: support@bitterguard.com\nPhone: +63 912 345 6789\nWebsite: www.bitterguard.com</string>
+    
+    <!-- User Management -->
+    <string name="user_management">Pamamahala ng User</string>
+    <string name="add_user">Magdagdag ng User</string>
+    <string name="edit_user">I-edit ang User</string>
+    <string name="delete_user">Tanggalin ang User</string>
+    <string name="user_role">Role ng User</string>
+    <string name="user_status">Status ng User</string>
+    <string name="active">Aktibo</string>
+    <string name="inactive">Hindi Aktibo</string>
+    
+    <!-- Disease Reports -->
+    <string name="disease_reports">Mga Ulat ng Sakit</string>
+    <string name="export_reports">I-export ang mga Ulat</string>
+    <string name="total_cases">Kabuuang mga Kaso</string>
+    <string name="disease_types">Mga Uri ng Sakit</string>
+    <string name="infected_rate">Rate ng Nahawa</string>
+    
+    <!-- System Settings -->
+    <string name="system_settings">Mga Setting ng Sistema</string>
+    <string name="general_settings">Mga Pangkalahatang Setting</string>
+    <string name="advanced_settings">Mga Advanced na Setting</string>
+    <string name="auto_backup">Auto Backup</string>
+    <string name="auto_backup_desc">Awtomatikong i-backup ang data sa cloud storage</string>
+    <string name="debug_mode">Debug Mode</string>
+    <string name="debug_mode_desc">Paganahin ang detalyadong logging para sa troubleshooting</string>
+    <string name="maintenance_mode">Maintenance Mode</string>
+    <string name="maintenance_mode_desc">Pansamantalang i-disable ang app para sa maintenance</string>
+    <string name="notifications_desc">Tumanggap ng mga alert at update</string>
+    <string name="maintenance_mode_warning">Ang maintenance mode ay magdi-disable ng app para sa lahat ng user. Sigurado ka ba?</string>
+    <string name="debug_mode_info">Ang debug mode ay maglo-log ng detalyadong impormasyon. Maaaring makaapekto ito sa performance.</string>
+    <string name="settings_saved">Matagumpay na na-save ang mga setting</string>
+    
+    <!-- Common -->
+    <string name="or">o</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Kanselahin</string>
+    <string name="save">I-save</string>
+    <string name="delete">Tanggalin</string>
+    <string name="edit">I-edit</string>
+    <string name="back">Bumalik</string>
+    <string name="next">Susunod</string>
+    <string name="previous">Nakaraan</string>
+    <string name="loading">Naglo-load...</string>
+    <string name="error">Error</string>
+    <string name="success">Tagumpay</string>
+    <string name="warning">Babala</string>
+    
+    <!-- Errors -->
+    <string name="network_error">Network error. Subukan ulit.</string>
+    <string name="camera_error">Hindi mabuksan ang camera</string>
+    <string name="permission_denied">Tinanggihan ang pahintulot</string>
+    <string name="invalid_phone">Hindi wasto ang numero ng telepono</string>
+    <string name="invalid_otp">Hindi wasto ang OTP</string>
+</resources> 

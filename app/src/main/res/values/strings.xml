@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BitterGuard Mobile</string>
+    
+    <!-- Firebase -->
+    <string name="default_web_client_id">721222547653-4r8mqv3ohm11657hfl9ebt3rpsg8vlel.apps.googleusercontent.com</string>
+    
+    <!-- Main Activity -->
+    <string name="welcome_message">Welcome to BitterGuard</string>
+    <string name="scan_leaf">Scan Leaf</string>
+    <string name="view_history">View History</string>
+    <string name="disease_info">Disease Information</string>
+    <string name="continue_as_guest">Continue as Guest</string>
+    <string name="login_with_phone">Login with Phone</string>
+    <string name="login_with_google">Login with Google</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Discover Bitter Gourd Diseases</string>
+    <string name="onboarding_desc_1">Using AI technology, we can easily identify diseases affecting your bitter gourd plants</string>
+    <string name="onboarding_title_2">Take a Photo</string>
+    <string name="onboarding_desc_2">Scan bitter gourd leaves for instant diagnosis and treatment recommendations</string>
+    <string name="onboarding_title_3">Follow Recommendations</string>
+    <string name="onboarding_desc_3">Get detailed information about diseases and how to treat them</string>
+    <string name="get_started">Get Started</string>
+    <string name="skip">Skip</string>
+    
+    <!-- Phone Login -->
+    <string name="phone_login_title">Login with Phone</string>
+    <string name="enter_phone">Enter phone number</string>
+    <string name="send_otp">Send OTP</string>
+    <string name="enter_otp">Enter OTP</string>
+    <string name="verify_otp">Verify OTP</string>
+    <string name="resend_otp">Resend OTP</string>
+    <string name="back_to_login">Back to Login</string>
+    
+    <!-- Homepage -->
+    <string name="home" translatable="false">Home</string>
+    <string name="scan">Scan</string>
+    <string name="history">History</string>
+    <string name="profile">Profile</string>
+    <string name="welcome_home">Welcome!</string>
+    <string name="scan_leaf_now">Scan leaf now</string>
+    <string name="recent_scans">Recent scans</string>
+    <string name="no_recent_scans">No recent scans</string>
+    
+    <!-- Camera/Scan -->
+    <string name="take_photo">Take Photo</string>
+    <string name="choose_from_gallery">Choose from Gallery</string>
+    <string name="analyzing">Analyzing...</string>
+    <string name="scan_result">Scan Result</string>
+    <string name="scan_leaf_desc">Take a photo or choose from gallery to scan for diseases</string>
+    <string name="camera_preview">Camera Preview</string>
+    <string name="position_leaf">Position the leaf in the frame</string>
+    <string name="instructions_title">📋 Instructions</string>
+    <string name="instruction_lighting">• Ensure good lighting</string>
+    <string name="instruction_surface">• Place leaf on a clean surface</string>
+    <string name="instruction_steady">• Keep camera steady</string>
+    <string name="instruction_capture">• Capture the entire leaf</string>
+    <string name="scan_diseases">🔍 Scan for Diseases</string>
+    <string name="select_image_first">Please select an image first</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="camera_permission_denied">Camera permission is required to take photos</string>
+    <string name="gallery_permission_denied">Gallery permission is required to select images</string>
+    <string name="settings">Settings</string>
+    
+    <!-- Disease Names -->
+    <string name="fusarium_wilt">Fusarium Wilt</string>
+    <string name="downy_mildew">Downy Mildew</string>
+    <string name="mosaic_virus">Mosaic Virus</string>
+    <string name="healthy_plant">Healthy Plant</string>
+    
+    <!-- Disease Descriptions -->
+    <string name="fusarium_wilt_desc">A fungal disease that causes yellowing and wilting of leaves, eventually leading to plant death</string>
+    <string name="downy_mildew_desc">A fungal disease that appears as yellow spots on upper leaf surfaces with white to grayish growth underneath</string>
+    <string name="mosaic_virus_desc">A viral disease that causes mottled, distorted leaves with irregular patterns of light and dark green</string>
+    <string name="healthy_plant_desc">The plant is healthy and disease-free</string>
+    
+    <!-- Severity Levels -->
+    <string name="severity_high">Severity: High</string>
+    <string name="severity_medium">Severity: Medium</string>
+    <string name="severity_low">Severity: Low</string>
+    <string name="severity_none">No disease</string>
+    
+    <!-- Treatment -->
+    <string name="treatment">Treatment</string>
+    <string name="treatment_guide">Treatment Guide</string>
+    <string name="treatment_guide_desc">Comprehensive treatment and prevention methods for bitter gourd diseases</string>
+    <string name="treatment_recommendations">Treatment recommendations</string>
+    <string name="prevention_tips">Prevention tips</string>
+    
+    <!-- History -->
+    <string name="scan_history">Scan History</string>
+    <string name="date">Date</string>
+    <string name="time">Time</string>
+    <string name="location">Location</string>
+    <string name="confidence">Confidence</string>
+    <string name="prediction">Prediction</string>
+    <string name="no_history">No history</string>
+    
+    <!-- Disease Info -->
+    <string name="disease_information">Disease Information</string>
+    <string name="search_diseases">Search diseases...</string>
+    <string name="common_diseases">Common Bitter Gourd Diseases</string>
+    <string name="prevention_tips_title">Prevention Tips</string>
+    <string name="prevention_tip_1">• Maintain proper spacing between plants</string>
+    <string name="prevention_tip_2">• Water at the base, avoid wetting leaves</string>
+    <string name="prevention_tip_3">• Remove infected plant parts immediately</string>
+    <string name="prevention_tip_4">• Use disease-resistant varieties</string>
+    
+    <!-- Forum -->
+    <string name="community_forum">Community Forum</string>
+    
+    <!-- Settings -->
+    <string name="language">Language</string>
+    <string name="english">English</string>
+    <string name="filipino">Filipino</string>
+    <string name="notifications">Notifications</string>
+    <string name="about">About</string>
+    <string name="help_support">Help &amp; Support</string>
+    <string name="contact_support">Contact Support</string>
+    <string name="logout">Logout</string>
+    
+    <!-- About -->
+    <string name="version_format">Version %s</string>
+    <string name="about_description">BitterGuard Mobile is an AI-powered application designed to help Filipino farmers identify and manage diseases in bitter gourd plants. Using advanced machine learning technology, the app provides instant disease detection and treatment recommendations.</string>
+    <string name="features_title">Key Features</string>
+    <string name="features_list">• AI-powered disease detection\n• Instant scan results\n• Treatment recommendations\n• Disease information database\n• Scan history tracking\n• Multi-language support</string>
+    <string name="contact_title">Contact Information</string>
+    <string name="contact_info">For support and inquiries:\nEmail: support@bitterguard.com\nPhone: +63 912 345 6789\nWebsite: www.bitterguard.com</string>
+    
+    <!-- Common -->
+    <string name="or">or</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="post">Post</string>
+    <string name="back">Back</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="warning">Warning</string>
+    
+    <!-- Errors -->
+    <string name="network_error">Network error. Please try again.</string>
+    <string name="camera_error">Cannot open camera</string>
+    <string name="permission_denied">Permission denied</string>
+    <string name="invalid_phone">Invalid phone number</string>
+    <string name="invalid_otp">Invalid OTP</string>
+    
+    <!-- Missing String Resources -->
+    <string name="active">Active</string>
+    <string name="add_user">Add User</string>
+    <string name="admin_panel">Admin Panel</string>
+    <string name="advanced_settings">Advanced Settings</string>
+    <string name="ai_model_loaded">AI model loaded successfully</string>
+    <string name="analytics">Analytics</string>
+    <string name="auto_backup">Auto Backup</string>
+    <string name="auto_backup_desc">Automatically backup your data</string>
+    <string name="browse_diseases">Browse Diseases</string>
+    <string name="change_password">Change Password</string>
+    <string name="debug_mode">Debug Mode</string>
+    <string name="debug_mode_desc">Enable debug features</string>
+    <string name="debug_mode_info">Debug mode provides additional features for development and testing</string>
+    <string name="delete_user">Delete User</string>
+    <string name="demo_mode">Using demo mode for analysis</string>
+    <string name="disease_detected">Disease detected</string>
+    <string name="disease_distribution">Disease Distribution</string>
+    <string name="disease_reports">Disease Reports</string>
+    <string name="disease_types">Disease Types</string>
+    <string name="diseases_found">Diseases Found</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="edit_user">Edit User</string>
+    <string name="export_reports">Export Reports</string>
+    <string name="forum_coming_soon">Forum functionality coming in next version</string>
+    <string name="general_settings">General Settings</string>
+    <string name="healthy">Healthy</string>
+    <string name="image_selected">Image selected!</string>
+    <string name="inactive">Inactive</string>
+    <string name="infected_rate">Infected Rate</string>
+    <string name="maintenance_mode">Maintenance Mode</string>
+    <string name="maintenance_mode_desc">System is under maintenance</string>
+    <string name="maintenance_mode_warning">The system is currently under maintenance. Please try again later.</string>
+    <string name="no_diseases_found">No diseases found matching %s</string>
+    <string name="notifications_desc">Manage your notification preferences</string>
+    <string name="password_change_coming_soon">Password change functionality coming in next version</string>
+    <string name="photo_captured_successfully">Photo captured successfully!</string>
+    <string name="privacy_settings">Privacy Settings</string>
+    <string name="privacy_settings_coming_soon">Privacy settings functionality coming in next version</string>
+    <string name="profile_editing_coming_soon">Profile editing functionality coming in next version</string>
+    <string name="recent_activity">Recent Activity</string>
+    <string name="scan_completed">Scan completed</string>
+    <string name="scan_trends">Scan Trends</string>
+    <string name="search_functionality_coming_soon">Search functionality coming soon!</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="system_settings">System Settings</string>
+    <string name="theme_changed_restart">Theme changed to %s. Restart app to apply changes.</string>
+    <string name="total_cases">Total Cases</string>
+    <string name="total_scans">Total Scans</string>
+    <string name="user_management">User Management</string>
+    <string name="user_role">User Role</string>
+    <string name="user_status">User Status</string>
+    <string name="using_fallback_mode">Using fallback detection mode</string>
+</resources>

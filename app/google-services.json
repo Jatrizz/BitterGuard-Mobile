@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "721222547653",
+    "project_id": "bitterguard-50c58",
+    "storage_bucket": "bitterguard-50c58.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:721222547653:android:428276fbbf7e68ecbd58ac",
+        "android_client_info": {
+          "package_name": "com.example.bitterguardmobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "721222547653-mjeh0de0ujka539akt9ufkcrn3sna7rt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bitterguardmobile",
+            "certificate_hash": "ae3b7c53b58d1a3839ffcef15757aba3c83f8094"
+          }
+        },
+        {
+          "client_id": "721222547653-4r8mqv3ohm11657hfl9ebt3rpsg8vlel.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBemlocWHQeIVi76v7vcg5c18gSzKUc84I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "721222547653-4r8mqv3ohm11657hfl9ebt3rpsg8vlel.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

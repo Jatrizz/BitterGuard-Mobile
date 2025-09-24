@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_notifications"
+        android:icon="@android:drawable/ic_dialog_email"
+        android:title="Notifications"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_bookmarks"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:title="Bookmarks"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_moderation"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Moderation"
+        android:visible="false"
+        app:showAsAction="never" />
+
+</menu>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/rounded_input_outline"
+    android:backgroundTint="@android:color/white">
+
+    <!-- Translation Key -->
+    <TextView
+        android:id="@+id/translationKey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="translation_key"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary_green"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Translation Value Input -->
+    <EditText
+        android:id="@+id/translationValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Translation value"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary"
+        android:background="@drawable/input_background"
+        android:padding="8dp"
+        android:minLines="1"
+        android:maxLines="3"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btnSaveTranslation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:background="@drawable/rounded_button"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/primary_green"
+            android:textSize="12sp"
+            android:paddingHorizontal="16dp"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btnDeleteTranslation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delete"
+            android:background="@drawable/rounded_button"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/error_red"
+            android:textSize="12sp"
+            android:paddingHorizontal="16dp" />
+
+    </LinearLayout>
+
+</LinearLayout>
