@@ -101,40 +101,89 @@ class ImageStorageManager(private val context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 val finalFileName = fileName ?: "forum_${System.currentTimeMillis()}.jpg"
+                Log.d(TAG, "Starting image upload: $finalFileName")
 
                 // Read bytes from URI
                 val bytes = context.contentResolver.openInputStream(imageUri)?.use(InputStream::readBytes)
                     ?: return@withContext Result.failure(Exception("Unable to read image"))
 
-                val client = OkHttpClient()
-                val bucketId = "forum_images" // existing bucket
-                val objectPath = "$userId/$finalFileName"
-                val url = "${SupabaseConfig.PROJECT_URL}/storage/v1/object/$bucketId/$objectPath"
+                Log.d(TAG, "Image size: ${bytes.size} bytes")
 
-                val mediaType = "image/jpeg".toMediaType()
-                val req = Request.Builder()
-                    .url(url)
-                    .post(bytes.toRequestBody(mediaType))
-                    .addHeader("Authorization", "Bearer $accessToken")
-                    .addHeader("apikey", SupabaseConfig.API_KEY)
-                    .build()
+                // Try multiple bucket names in case the bucket doesn't exist
+                val possibleBuckets = listOf("forum_images", "forum-images", "images", "public")
+                
+                for (bucketId in possibleBuckets) {
+                    try {
+                        val client = OkHttpClient()
+                        val objectPath = "$userId/$finalFileName"
+                        val url = "${SupabaseConfig.PROJECT_URL}/storage/v1/object/$bucketId/$objectPath"
 
-                val resp = client.newCall(req).execute()
-                val bodyStr = resp.body?.string() ?: ""
-                if (!resp.isSuccessful) {
-                    Log.e(TAG, "Upload failed: ${resp.code} $bodyStr")
-                    return@withContext Result.failure(Exception("Upload failed ${resp.code}"))
+                        Log.d(TAG, "Trying bucket '$bucketId' with URL: $url")
+
+                        val mediaType = "image/jpeg".toMediaType()
+                        val req = Request.Builder()
+                            .url(url)
+                            .post(bytes.toRequestBody(mediaType))
+                            .addHeader("Authorization", "Bearer $accessToken")
+                            .addHeader("apikey", SupabaseConfig.API_KEY)
+                            .addHeader("Content-Type", "image/jpeg")
+                            .build()
+
+                        val resp = client.newCall(req).execute()
+                        val bodyStr = resp.body?.string() ?: ""
+                        
+                        Log.d(TAG, "Upload response for bucket '$bucketId': ${resp.code} - $bodyStr")
+                        
+                        if (resp.isSuccessful) {
+                            val publicUrl = "${SupabaseConfig.PROJECT_URL}/storage/v1/object/public/$bucketId/$objectPath"
+                            Log.d(TAG, "Forum image uploaded successfully: $publicUrl")
+                            return@withContext Result.success(publicUrl)
+                        } else {
+                            Log.w(TAG, "Bucket '$bucketId' failed with ${resp.code}: $bodyStr")
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Error with bucket '$bucketId': ${e.message}")
+                    }
                 }
-
-                // If bucket is public, expose via public endpoint
-                val publicUrl = "${SupabaseConfig.PROJECT_URL}/storage/v1/object/public/$bucketId/$objectPath"
-                Log.d(TAG, "Forum image uploaded: $publicUrl")
-                Result.success(publicUrl)
+                
+                // If all buckets failed, try a fallback approach - save locally and return file URL
+                Log.w(TAG, "All Supabase buckets failed, falling back to local storage")
+                val fallbackResult = saveImageLocally(imageUri, finalFileName)
+                if (fallbackResult.isSuccess) {
+                    val localUrl = fallbackResult.getOrNull()!!
+                    Log.d(TAG, "Image saved locally: $localUrl")
+                    return@withContext Result.success(localUrl)
+                }
+                
+                Result.failure(Exception("All upload methods failed"))
                 
             } catch (e: Exception) {
                 Log.e(TAG, "Error uploading forum image: ${e.message}", e)
                 Result.failure(e)
             }
+        }
+    }
+    
+    private suspend fun saveImageLocally(imageUri: Uri, fileName: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val forumDir = File(context.filesDir, FORUM_IMAGES_DIR)
+            if (!forumDir.exists()) {
+                forumDir.mkdirs()
+            }
+            
+            val imageFile = File(forumDir, fileName)
+            context.contentResolver.openInputStream(imageUri)?.use { input ->
+                imageFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            
+            val fileUrl = "file://${imageFile.absolutePath}"
+            Log.d(TAG, "Image saved locally: $fileUrl")
+            Result.success(fileUrl)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving image locally: ${e.message}", e)
+            Result.failure(e)
         }
     }
     

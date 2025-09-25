@@ -29,8 +29,8 @@ data class ForumPost(
     // Convenience properties for backward compatibility
     val authorUid: String get() = author_uid
     val authorName: String get() = author_name
-    val createdAt: Long get() = created_at.toLongOrNull() ?: System.currentTimeMillis()
-    val updatedAt: Long get() = updated_at.toLongOrNull() ?: System.currentTimeMillis()
+    val createdAt: Long get() = parseTimestamp(created_at)
+    val updatedAt: Long get() = parseTimestamp(updated_at)
     val commentCount: Int get() = comment_count
     val likeCount: Int get() = like_count
     val viewCount: Int get() = view_count
@@ -38,6 +38,42 @@ data class ForumPost(
     val isLocked: Boolean get() = is_locked
     val isReported: Boolean get() = is_reported
     val reportedCount: Int get() = reported_count
+    
+    private fun parseTimestamp(timestamp: String): Long {
+        if (timestamp.isEmpty()) return System.currentTimeMillis()
+        
+        // Try to parse as Long first (for backwards compatibility)
+        timestamp.toLongOrNull()?.let { return it }
+        
+        // Try to parse as ISO 8601 timestamp with timezone offset (Supabase returns +00:00)
+        try {
+            val odt = java.time.OffsetDateTime.parse(timestamp, java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+            val result = odt.toInstant().toEpochMilli()
+            android.util.Log.d("ForumModels", "Parsed timestamp '$timestamp' via ISO_OFFSET_DATE_TIME to $result")
+            return result
+        } catch (e: Exception) {
+            android.util.Log.d("ForumModels", "Failed ISO_OFFSET_DATE_TIME parse for '$timestamp': ${e.message}")
+            // Try Instant (supports Z-suffixed instants)
+            try {
+                val instant = java.time.Instant.parse(timestamp)
+                val result = instant.toEpochMilli()
+                android.util.Log.d("ForumModels", "Parsed timestamp '$timestamp' via Instant to $result")
+                return result
+            } catch (e2: Exception) {
+                android.util.Log.d("ForumModels", "Failed Instant parse for '$timestamp': ${e2.message}")
+            }
+            // Try other common formats without timezone (fallback)
+            try {
+                val formatter = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX", java.util.Locale.getDefault())
+                val result = formatter.parse(timestamp)?.time ?: System.currentTimeMillis()
+                android.util.Log.d("ForumModels", "Parsed timestamp '$timestamp' via pattern SSSSSSXXX to $result")
+                return result
+            } catch (e3: Exception) {
+                android.util.Log.d("ForumModels", "Failed to parse timestamp '$timestamp': ${e3.message}, using current time")
+                return System.currentTimeMillis()
+            }
+        }
+    }
 }
 
 @Serializable

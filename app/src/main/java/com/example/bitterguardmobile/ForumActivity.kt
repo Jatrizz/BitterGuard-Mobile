@@ -53,19 +53,38 @@ class ForumActivity : BaseActivity() {
     private fun setupViews() {
         val recycler = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.postsRecycler)
         recycler.layoutManager = LinearLayoutManager(this)
-        adapter = ForumPostsAdapter(mutableListOf(), forumManager) { post ->
-            // Show post details in a dialog for now
-            showPostDetailsDialog(post)
-            // Increment views (best-effort)
-            CoroutineScope(Dispatchers.Main).launch { supabaseForum.incrementViewCount(post.id) }
-        }
+        adapter = ForumPostsAdapter(
+            mutableListOf(), 
+            forumManager,
+            onClick = { post ->
+                // Show post details in a dialog for now
+                showPostDetailsDialog(post)
+                // Increment views (best-effort) and update UI
+                CoroutineScope(Dispatchers.Main).launch { 
+                    val result = supabaseForum.incrementViewCount(post.id)
+                    if (result.isSuccess) {
+                        // Update the view count in the UI
+                        val updatedViewCount = post.viewCount + 1
+                        adapter.updatePostCounts(post.id, post.likeCount, post.commentCount, updatedViewCount)
+                    }
+                }
+            }
+        )
         recycler.adapter = adapter
+        
+        // Initialize empty state
+        updateEmptyState()
 
         swipeRefresh = findViewById(R.id.swipeRefresh)
         swipeRefresh.setOnRefreshListener { nextOffset = 0; loadPosts(true) }
 
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddPost)
             .setOnClickListener { showCreatePostDialog() }
+    }
+    
+    private fun updateEmptyState() {
+        val emptyView = findViewById<android.widget.TextView>(R.id.emptyView)
+        emptyView.visibility = if (adapter.itemCount == 0) android.view.View.VISIBLE else android.view.View.GONE
     }
     
     private fun setupSearch() {
@@ -93,7 +112,8 @@ class ForumActivity : BaseActivity() {
         categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 currentCategory = categories[position]
-                loadPosts()
+                nextOffset = 0
+                loadPosts(true)
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
@@ -113,7 +133,8 @@ class ForumActivity : BaseActivity() {
                     3 -> { currentSort = "comment_count"; currentSortOrder = "desc" }
                     4 -> { currentSort = "view_count"; currentSortOrder = "desc" }
                 }
-                loadPosts()
+                nextOffset = 0
+                loadPosts(true)
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
@@ -125,28 +146,36 @@ class ForumActivity : BaseActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 val category = if (currentCategory == "All") null else currentCategory
-                val result = supabaseForum.listPostsWithAuthors(category, pageSize, if (reset) 0 else nextOffset)
+                android.util.Log.d("ForumActivity", "Loading posts: category=$category, sort=$currentSort, order=$currentSortOrder, offset=${if (reset) 0 else nextOffset}")
+                val result = supabaseForum.listPostsWithAuthors(category, pageSize, if (reset) 0 else nextOffset, currentSort, currentSortOrder)
                 if (result.isSuccess) {
                     // Map DTO to existing model for adapter compatibility (with author name)
                     var posts = result.getOrNull()!!.map { pair ->
                         val dto = pair.first
-                        val authorName = if (dto.is_anonymous) "Anonymous" else (pair.second ?: "User")
+                        val authorName = if (dto.is_anonymous) "Anonymous" else (pair.second ?: dto.author_uid)
+                        
+                        // Debug timestamp parsing
+                        android.util.Log.d("ForumActivity", "Post ${dto.id}: created_at='${dto.created_at}', like_count=${dto.like_count}, comment_count=${dto.comment_count}, view_count=${dto.view_count}")
+                        
                         com.example.bitterguardmobile.models.ForumPost(
                             id = dto.id,
                             author_uid = dto.author_uid,
                             author_name = authorName,
                             title = dto.title,
                             content = dto.body,
-                            created_at = System.currentTimeMillis().toString(),
-                            updated_at = System.currentTimeMillis().toString(),
+                            created_at = dto.created_at,
+                            updated_at = dto.created_at, // Use created_at as updated_at if not available
                             comment_count = dto.comment_count,
                             like_count = dto.like_count,
-                            view_count = 0,
+                            view_count = dto.view_count,
                             category = dto.category ?: "General",
                             tags = dto.tags ?: emptyList(),
                             attachments = listOfNotNull(dto.image_url)
                         )
                     }
+                    
+                    // Check if we have any posts before applying search filter
+                    val hasPosts = posts.isNotEmpty()
                     
                     // Apply search filter
                     if (searchQuery.isNotEmpty()) {
@@ -157,10 +186,30 @@ class ForumActivity : BaseActivity() {
                         }
                     }
                     
+                    // Apply client-side sorting for likes and comments (since they're not in the main table)
+                    if (currentSort == "like_count" || currentSort == "comment_count") {
+                        android.util.Log.d("ForumActivity", "Applying client-side sorting: $currentSort.$currentSortOrder")
+                        posts = when (currentSort) {
+                            "like_count" -> if (currentSortOrder == "desc") {
+                                posts.sortedByDescending { it.likeCount }
+                            } else {
+                                posts.sortedBy { it.likeCount }
+                            }
+                            "comment_count" -> if (currentSortOrder == "desc") {
+                                posts.sortedByDescending { it.commentCount }
+                            } else {
+                                posts.sortedBy { it.commentCount }
+                            }
+                            else -> posts
+                        }
+                        android.util.Log.d("ForumActivity", "After sorting - first few posts: ${posts.take(3).map { "${it.title}: likes=${it.likeCount}, comments=${it.commentCount}" }}")
+                    }
+                    
                     if (reset) adapter.updateItems(posts) else adapter.appendItems(posts)
                     nextOffset = if (reset) posts.size else nextOffset + posts.size
-                    findViewById<android.widget.TextView>(R.id.emptyView).visibility = 
-                        if (posts.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
+                    
+                    // Update empty state based on adapter item count
+                    updateEmptyState()
                 } else {
                     android.widget.Toast.makeText(this@ForumActivity, "Failed to load posts", android.widget.Toast.LENGTH_SHORT).show()
                 }
@@ -224,15 +273,27 @@ class ForumActivity : BaseActivity() {
                             if (token != null && user != null) {
                                 val storage = ImageStorageManager(this@ForumActivity)
                                 val up = storage.uploadForumImageToSupabase(selectedImageUri!!, selectedImageName, token, user.id)
-                                if (up.isSuccess) imageUrl = up.getOrNull()
-                                else android.widget.Toast.makeText(this@ForumActivity, "Image upload failed", android.widget.Toast.LENGTH_SHORT).show()
+                                if (up.isSuccess) {
+                                    imageUrl = up.getOrNull()
+                                    android.util.Log.d("ForumActivity", "Image uploaded successfully: $imageUrl")
+                                } else {
+                                    val errorMsg = up.exceptionOrNull()?.message ?: "Unknown error"
+                                    android.util.Log.e("ForumActivity", "Image upload failed: $errorMsg")
+                                    android.widget.Toast.makeText(this@ForumActivity, "Image upload failed: $errorMsg", android.widget.Toast.LENGTH_LONG).show()
+                                }
                             }
                         }
 
                         val result = supabaseForum.createPost(title, content, category, tags, isAnonymous, imageUrl)
                         if (result.isSuccess) {
                             android.widget.Toast.makeText(this@ForumActivity, "Post created successfully!", android.widget.Toast.LENGTH_SHORT).show()
-                            loadPosts()
+                            // Reset offset and reload posts to show the new post at the top
+                            nextOffset = 0
+                            // Small delay to ensure the post is fully created in the database
+                            kotlinx.coroutines.delay(500)
+                            loadPosts(true)
+                            // Scroll to top to show the new post
+                            findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.postsRecycler).scrollToPosition(0)
                         } else {
                             android.widget.Toast.makeText(this@ForumActivity, "Failed to create post: ${result.exceptionOrNull()?.message}", android.widget.Toast.LENGTH_LONG).show()
                         }
@@ -339,6 +400,10 @@ class ForumActivity : BaseActivity() {
                     tv.setTextColor(android.graphics.Color.parseColor("#333333"))
                     tv.setPadding(0, 8, 0, 8)
                     commentsContainer.addView(tv, 0)
+                    
+                    // Update comment count in the forum list
+                    val updatedCommentCount = post.commentCount + 1
+                    adapter.updatePostCounts(post.id, post.likeCount, updatedCommentCount, post.viewCount)
                 } else {
                     android.widget.Toast.makeText(this@ForumActivity, "Failed to add comment", android.widget.Toast.LENGTH_SHORT).show()
                 }

@@ -12,7 +12,8 @@ import kotlinx.coroutines.*
 class ForumPostsAdapter(
     private var posts: MutableList<ForumPost>,
     private val forumManager: LocalForumManager,
-    private val onClick: (ForumPost) -> Unit
+    private val onClick: (ForumPost) -> Unit,
+    private val onBookmarkClick: ((ForumPost) -> Unit)? = null
 ) : RecyclerView.Adapter<ForumPostsAdapter.PostViewHolder>() {
 
     private val supabaseForum by lazy { SupabaseForumService(itemViewContext) }
@@ -51,27 +52,32 @@ class ForumPostsAdapter(
         holder.tvTitle.text = post.title
         holder.tvContent.text = post.content
         holder.tvAuthor.text = post.authorName
-        holder.tvTime.text = android.text.format.DateUtils.getRelativeTimeSpanString(post.createdAt)
+        holder.tvTime.text = getRelativeTimeString(post.createdAt)
         holder.tvComments.text = "${post.commentCount}"
         holder.tvLikes.text = "${post.likeCount}"
         holder.tvViews.text = "${post.viewCount}"
         
         // Thumbnail (basic public URL handling)
         holder.ivThumb.visibility = View.GONE
-        holder.ivThumb.visibility = View.GONE
         val urlField = post.attachments.firstOrNull()
         if (!urlField.isNullOrBlank()) {
             if (urlField.startsWith("file:") || urlField.startsWith("content:")) {
                 holder.ivThumb.visibility = View.VISIBLE
                 holder.ivThumb.setImageURI(android.net.Uri.parse(urlField))
+                holder.ivThumb.scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
             } else if (urlField.startsWith("http")) {
                 holder.ivThumb.visibility = View.VISIBLE
-                // Use simple WebView to render public image if Bitmap fetch fails (no 3rd party libs)
+                // Load image from URL with proper scaling
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val bmp = android.graphics.BitmapFactory.decodeStream(java.net.URL(urlField).openStream())
-                        withContext(Dispatchers.Main) { holder.ivThumb.setImageBitmap(bmp) }
-                    } catch (_: Exception) {
+                        withContext(Dispatchers.Main) { 
+                            holder.ivThumb.setImageBitmap(bmp)
+                            holder.ivThumb.scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+                            holder.ivThumb.visibility = View.VISIBLE
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("ForumPostsAdapter", "Failed to load image: ${e.message}")
                         withContext(Dispatchers.Main) { holder.ivThumb.visibility = View.GONE }
                     }
                 }
@@ -91,19 +97,28 @@ class ForumPostsAdapter(
         holder.ivPinned.visibility = if (post.isPinned) View.VISIBLE else View.GONE
         holder.ivLocked.visibility = if (post.isLocked) View.VISIBLE else View.GONE
         
-        // Like button
+        // Like button - make it easier to click and same size as other icons
+        holder.btnLike.setPadding(0, 0, 0, 0)
+        holder.btnLike.minimumWidth = 64
+        holder.btnLike.minimumHeight = 64
         holder.btnLike.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     val result = supabaseForum.toggleLikePost(post.id)
                     if (result.isSuccess) {
-                        val isLiked = result.getOrNull() ?: false
+                        val justLiked = result.getOrNull() ?: false
                         holder.btnLike.setImageResource(
-                            if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off
+                            if (justLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off
                         )
-                        // Update like count
-                        val base = holder.tvLikes.text.toString().toIntOrNull() ?: 0
-                        holder.tvLikes.text = "${base + if (isLiked) 1 else -1}"
+                        // Add color tinting
+                        holder.btnLike.setColorFilter(
+                            if (justLiked) android.graphics.Color.parseColor("#4CAF50") else android.graphics.Color.parseColor("#9E9E9E")
+                        )
+                        
+                        // Refresh the actual counts from the server instead of manual calculation
+                        refreshPostCounts(post.id)
+                    } else {
+                        android.widget.Toast.makeText(holder.itemView.context, "Failed to toggle like", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     android.widget.Toast.makeText(holder.itemView.context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
@@ -111,19 +126,37 @@ class ForumPostsAdapter(
             }
         }
         
-        // Bookmark button
+        // Bookmark button - make it easier to click and same size as other icons
+        holder.btnBookmark.setPadding(0, 0, 0, 0)
+        holder.btnBookmark.minimumWidth = 64
+        holder.btnBookmark.minimumHeight = 64
         holder.btnBookmark.setOnClickListener {
-            CoroutineScope(Dispatchers.Main).launch {
-                try {
-                    val result = supabaseForum.toggleBookmarkPost(post.id)
-                    if (result.isSuccess) {
-                        val isBookmarked = result.getOrNull() ?: false
-                        holder.btnBookmark.setImageResource(
-                            if (isBookmarked) android.R.drawable.ic_input_add else android.R.drawable.ic_input_add
-                        )
+            if (onBookmarkClick != null) {
+                // Use custom bookmark handler
+                onBookmarkClick(post)
+            } else {
+                // Use default bookmark handler
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val result = supabaseForum.toggleBookmarkPost(post.id)
+                        if (result.isSuccess) {
+                            val isBookmarked = result.getOrNull() ?: false
+                            holder.btnBookmark.setImageResource(
+                                if (isBookmarked) android.R.drawable.ic_input_add else android.R.drawable.ic_input_add
+                            )
+                            // Add color tinting to show bookmark state
+                            holder.btnBookmark.setColorFilter(
+                                if (isBookmarked) android.graphics.Color.parseColor("#FF9800") else android.graphics.Color.parseColor("#9E9E9E")
+                            )
+                            android.widget.Toast.makeText(holder.itemView.context, 
+                                if (isBookmarked) "Bookmarked!" else "Removed from bookmarks", 
+                                android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
+                            android.widget.Toast.makeText(holder.itemView.context, "Failed to toggle bookmark", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        android.widget.Toast.makeText(holder.itemView.context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                     }
-                } catch (e: Exception) {
-                    android.widget.Toast.makeText(holder.itemView.context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -153,19 +186,33 @@ class ForumPostsAdapter(
     private fun loadInitialStates(holder: PostViewHolder, post: ForumPost) {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                // Check if liked
-                val isLiked = forumManager.isLiked(post.id)
+                // Check if liked from server
+                val isLikedResult = supabaseForum.isPostLiked(post.id)
+                val isLiked = if (isLikedResult.isSuccess) isLikedResult.getOrNull() ?: false else false
                 holder.btnLike.setImageResource(
                     if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off
                 )
+                // Add color tinting
+                holder.btnLike.setColorFilter(
+                    if (isLiked) android.graphics.Color.parseColor("#4CAF50") else android.graphics.Color.parseColor("#9E9E9E")
+                )
                 
-                // Check if bookmarked
-                val isBookmarked = forumManager.isBookmarked(post.id)
+                // Check if bookmarked from server
+                val isBookmarkedResult = supabaseForum.isPostBookmarked(post.id)
+                val isBookmarked = if (isBookmarkedResult.isSuccess) isBookmarkedResult.getOrNull() ?: false else false
                 holder.btnBookmark.setImageResource(
                     if (isBookmarked) android.R.drawable.ic_input_add else android.R.drawable.ic_input_add
                 )
+                // Add color tinting to show bookmark state
+                holder.btnBookmark.setColorFilter(
+                    if (isBookmarked) android.graphics.Color.parseColor("#FF9800") else android.graphics.Color.parseColor("#9E9E9E")
+                )
             } catch (e: Exception) {
-                // Handle silently
+                // Handle silently - set default states
+                holder.btnLike.setImageResource(android.R.drawable.btn_star_big_off)
+                holder.btnLike.setColorFilter(android.graphics.Color.parseColor("#9E9E9E"))
+                holder.btnBookmark.setImageResource(android.R.drawable.ic_input_add)
+                holder.btnBookmark.setColorFilter(android.graphics.Color.parseColor("#9E9E9E"))
             }
         }
     }
@@ -268,6 +315,66 @@ class ForumPostsAdapter(
         posts.addAll(moreItems)
         notifyItemRangeInserted(start, moreItems.size)
     }
+    
+    fun updatePostCounts(postId: String, likeCount: Int, commentCount: Int, viewCount: Int) {
+        val index = posts.indexOfFirst { it.id == postId }
+        if (index >= 0) {
+            val currentPost = posts[index]
+            val updatedPost = currentPost.copy(
+                like_count = likeCount,
+                comment_count = commentCount,
+                view_count = viewCount
+            )
+            posts[index] = updatedPost
+            notifyItemChanged(index)
+        }
+    }
+    
+    suspend fun refreshPostCounts(postId: String) {
+        try {
+            val result = supabaseForum.getPostCounts(postId)
+            if (result.isSuccess) {
+                val (likeCount, commentCount, viewCount) = result.getOrNull()!!
+                updatePostCounts(postId, likeCount, commentCount, viewCount)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ForumPostsAdapter", "Failed to refresh counts for post $postId: ${e.message}")
+        }
+    }
+    
+    private fun getRelativeTimeString(timestamp: Long): String {
+        val now = System.currentTimeMillis()
+        val diff = now - timestamp
+        
+        return when {
+            diff <= 15000 -> "Just now"
+            diff < 60000 -> "${diff / 1000}s"
+            diff < 3600000 -> "${diff / 60000}m"
+            diff < 86400000 -> "${diff / 3600000}h"
+            diff < 604800000 -> "${diff / 86400000}d"
+            diff < 2592000000L -> "${diff / 604800000}w"
+            diff < 31536000000L -> "${diff / 2592000000L}mo"
+            else -> "${diff / 31536000000L}y"
+        }
+    }
+    
+    private fun scaleImageToFit(bitmap: android.graphics.Bitmap, targetWidth: Int, targetHeight: Int): android.graphics.Bitmap {
+        if (targetWidth <= 0 || targetHeight <= 0) return bitmap
+        
+        val originalWidth = bitmap.width
+        val originalHeight = bitmap.height
+        
+        // Calculate scale factor to fit the image within the target dimensions
+        val scaleX = targetWidth.toFloat() / originalWidth
+        val scaleY = targetHeight.toFloat() / originalHeight
+        val scale = minOf(scaleX, scaleY)
+        
+        val scaledWidth = (originalWidth * scale).toInt()
+        val scaledHeight = (originalHeight * scale).toInt()
+        
+        return android.graphics.Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+    }
+    
 }
 
 
