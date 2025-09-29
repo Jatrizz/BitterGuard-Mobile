@@ -53,10 +53,20 @@ object AppConfig {
         "Mosaic Virus"
     )
     
+    // Leaf detection classes (configurable)
+    private const val KEY_LEAF_CLASSES = "leaf_classes"
+    private val DEFAULT_LEAF_CLASSES = arrayOf(
+        "Bitter Gourd",
+        "Not"
+    )
+    
     // Model configuration
     private const val KEY_MODEL_FILENAME = "model_filename"
+    private const val KEY_LEAF_DETECTION_MODEL = "leaf_detection_model"
+    private const val KEY_DISEASE_DETECTION_MODEL = "disease_detection_model"
     private const val KEY_INPUT_SIZE = "input_size"
-    private const val DEFAULT_MODEL_FILENAME = "best.ptl"
+    private const val DEFAULT_LEAF_DETECTION_MODEL = "Best_Ampalaya_or_not.ptl"
+    private const val DEFAULT_DISEASE_DETECTION_MODEL = "Best_Leaf_Disease.ptl"
     private const val DEFAULT_INPUT_SIZE = 224
     
     private lateinit var sharedPreferences: SharedPreferences
@@ -81,8 +91,14 @@ object AppConfig {
     fun getModelVersion(): String = sharedPreferences.getString(KEY_MODEL_VERSION, DEFAULT_MODEL_VERSION) ?: DEFAULT_MODEL_VERSION
     fun setModelVersion(version: String) = sharedPreferences.edit().putString(KEY_MODEL_VERSION, version).apply()
     
-    fun getModelFilename(): String = sharedPreferences.getString(KEY_MODEL_FILENAME, DEFAULT_MODEL_FILENAME) ?: DEFAULT_MODEL_FILENAME
+    fun getModelFilename(): String = sharedPreferences.getString(KEY_MODEL_FILENAME, DEFAULT_LEAF_DETECTION_MODEL) ?: DEFAULT_LEAF_DETECTION_MODEL
     fun setModelFilename(filename: String) = sharedPreferences.edit().putString(KEY_MODEL_FILENAME, filename).apply()
+    
+    fun getLeafDetectionModel(): String = sharedPreferences.getString(KEY_LEAF_DETECTION_MODEL, DEFAULT_LEAF_DETECTION_MODEL) ?: DEFAULT_LEAF_DETECTION_MODEL
+    fun setLeafDetectionModel(filename: String) = sharedPreferences.edit().putString(KEY_LEAF_DETECTION_MODEL, filename).apply()
+    
+    fun getDiseaseDetectionModel(): String = sharedPreferences.getString(KEY_DISEASE_DETECTION_MODEL, DEFAULT_DISEASE_DETECTION_MODEL) ?: DEFAULT_DISEASE_DETECTION_MODEL
+    fun setDiseaseDetectionModel(filename: String) = sharedPreferences.edit().putString(KEY_DISEASE_DETECTION_MODEL, filename).apply()
     
     fun getInputSize(): Int = sharedPreferences.getInt(KEY_INPUT_SIZE, DEFAULT_INPUT_SIZE)
     fun setInputSize(size: Int) = sharedPreferences.edit().putInt(KEY_INPUT_SIZE, size).apply()
@@ -100,6 +116,12 @@ object AppConfig {
         return classesString?.split(",")?.toTypedArray() ?: DEFAULT_DISEASE_CLASSES
     }
     fun setDiseaseClasses(classes: Array<String>) = sharedPreferences.edit().putString(KEY_DISEASE_CLASSES, classes.joinToString(",")).apply()
+    
+    fun getLeafClasses(): Array<String> {
+        val classesString = sharedPreferences.getString(KEY_LEAF_CLASSES, DEFAULT_LEAF_CLASSES.joinToString(","))
+        return classesString?.split(",")?.toTypedArray() ?: DEFAULT_LEAF_CLASSES
+    }
+    fun setLeafClasses(classes: Array<String>) = sharedPreferences.edit().putString(KEY_LEAF_CLASSES, classes.joinToString(",")).apply()
     
     // Image Configuration
     fun getImageQuality(): Int = sharedPreferences.getInt(KEY_IMAGE_QUALITY, DEFAULT_IMAGE_QUALITY)

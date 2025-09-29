@@ -228,15 +228,6 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
-            <!-- Bookmark -->
-            <ImageView
-                android:id="@+id/btnBookmark"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_input_add"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:padding="4dp"
-                android:tint="@color/primary_green" />
 
         </LinearLayout>
 

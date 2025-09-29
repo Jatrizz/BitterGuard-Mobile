@@ -12,8 +12,7 @@ import kotlinx.coroutines.*
 class ForumPostsAdapter(
     private var posts: MutableList<ForumPost>,
     private val forumManager: LocalForumManager,
-    private val onClick: (ForumPost) -> Unit,
-    private val onBookmarkClick: ((ForumPost) -> Unit)? = null
+    private val onClick: (ForumPost) -> Unit
 ) : RecyclerView.Adapter<ForumPostsAdapter.PostViewHolder>() {
 
     private val supabaseForum by lazy { SupabaseForumService(itemViewContext) }
@@ -31,7 +30,6 @@ class ForumPostsAdapter(
         val tvTags: TextView = itemView.findViewById(R.id.tvTags)
         val ivThumb: ImageView = itemView.findViewById(R.id.ivThumbnail)
         val btnLike: ImageView = itemView.findViewById(R.id.btnLike)
-        val btnBookmark: ImageView = itemView.findViewById(R.id.btnBookmark)
         val btnReport: ImageView = itemView.findViewById(R.id.btnReport)
         val ivPinned: ImageView = itemView.findViewById(R.id.ivPinned)
         val ivLocked: ImageView = itemView.findViewById(R.id.ivLocked)
@@ -126,58 +124,25 @@ class ForumPostsAdapter(
             }
         }
         
-        // Bookmark button - make it easier to click and same size as other icons
-        holder.btnBookmark.setPadding(0, 0, 0, 0)
-        holder.btnBookmark.minimumWidth = 64
-        holder.btnBookmark.minimumHeight = 64
-        holder.btnBookmark.setOnClickListener {
-            if (onBookmarkClick != null) {
-                // Use custom bookmark handler
-                onBookmarkClick(post)
-            } else {
-                // Use default bookmark handler
-                CoroutineScope(Dispatchers.Main).launch {
-                    try {
-                        val result = supabaseForum.toggleBookmarkPost(post.id)
-                        if (result.isSuccess) {
-                            val isBookmarked = result.getOrNull() ?: false
-                            holder.btnBookmark.setImageResource(
-                                if (isBookmarked) android.R.drawable.ic_input_add else android.R.drawable.ic_input_add
-                            )
-                            // Add color tinting to show bookmark state
-                            holder.btnBookmark.setColorFilter(
-                                if (isBookmarked) android.graphics.Color.parseColor("#FF9800") else android.graphics.Color.parseColor("#9E9E9E")
-                            )
-                            android.widget.Toast.makeText(holder.itemView.context, 
-                                if (isBookmarked) "Bookmarked!" else "Removed from bookmarks", 
-                                android.widget.Toast.LENGTH_SHORT).show()
-                        } else {
-                            android.widget.Toast.makeText(holder.itemView.context, "Failed to toggle bookmark", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        android.widget.Toast.makeText(holder.itemView.context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+        // Report button - show post details when clicked
+        holder.btnReport.setOnClickListener {
+            onClick(post)
         }
         
-        // Report / Edit / Delete via long press menu
-        holder.btnReport.setOnClickListener { showReportDialog(holder.itemView.context, post) }
+        // Edit / Delete via long press menu
         holder.itemView.setOnLongClickListener {
-            val items = arrayOf("Edit", "Delete", "Report")
+            val items = arrayOf("Edit", "Delete")
             androidx.appcompat.app.AlertDialog.Builder(holder.itemView.context)
                 .setItems(items) { _, which ->
                     when (which) {
                         0 -> showEditPostDialog(holder.itemView.context, post)
                         1 -> confirmDeletePost(holder.itemView.context, post)
-                        2 -> showReportDialog(holder.itemView.context, post)
                     }
                 }.show()
             true
         }
         
-        // Main click listener
-        holder.itemView.setOnClickListener { onClick(post) }
+        // Main item click disabled - only expand button works
         
         // Load initial states
         loadInitialStates(holder, post)
@@ -197,64 +162,19 @@ class ForumPostsAdapter(
                     if (isLiked) android.graphics.Color.parseColor("#4CAF50") else android.graphics.Color.parseColor("#9E9E9E")
                 )
                 
-                // Check if bookmarked from server
-                val isBookmarkedResult = supabaseForum.isPostBookmarked(post.id)
-                val isBookmarked = if (isBookmarkedResult.isSuccess) isBookmarkedResult.getOrNull() ?: false else false
-                holder.btnBookmark.setImageResource(
-                    if (isBookmarked) android.R.drawable.ic_input_add else android.R.drawable.ic_input_add
-                )
-                // Add color tinting to show bookmark state
-                holder.btnBookmark.setColorFilter(
-                    if (isBookmarked) android.graphics.Color.parseColor("#FF9800") else android.graphics.Color.parseColor("#9E9E9E")
-                )
+                // Set report button icon (three dots menu)
+                holder.btnReport.setImageResource(android.R.drawable.ic_menu_more)
+                holder.btnReport.setColorFilter(android.graphics.Color.parseColor("#9E9E9E"))
             } catch (e: Exception) {
                 // Handle silently - set default states
                 holder.btnLike.setImageResource(android.R.drawable.btn_star_big_off)
                 holder.btnLike.setColorFilter(android.graphics.Color.parseColor("#9E9E9E"))
-                holder.btnBookmark.setImageResource(android.R.drawable.ic_input_add)
-                holder.btnBookmark.setColorFilter(android.graphics.Color.parseColor("#9E9E9E"))
+                holder.btnReport.setImageResource(android.R.drawable.ic_menu_more)
+                holder.btnReport.setColorFilter(android.graphics.Color.parseColor("#9E9E9E"))
             }
         }
     }
     
-    private fun showReportDialog(context: android.content.Context, post: ForumPost) {
-        val reasons = arrayOf("Spam", "Inappropriate Content", "Off-topic", "Harassment", "Other")
-        
-        androidx.appcompat.app.AlertDialog.Builder(context)
-            .setTitle("Report Post")
-            .setItems(reasons) { _, which ->
-                val reason = reasons[which]
-                showReportDescriptionDialog(context, post, reason)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-    
-    private fun showReportDescriptionDialog(context: android.content.Context, post: ForumPost, reason: String) {
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_report_description, null)
-        val etDescription = dialogView.findViewById<android.widget.EditText>(R.id.etDescription)
-        
-        androidx.appcompat.app.AlertDialog.Builder(context)
-            .setTitle("Report: $reason")
-            .setView(dialogView)
-            .setPositiveButton("Submit") { _, _ ->
-                val description = etDescription.text.toString().trim()
-                CoroutineScope(Dispatchers.Main).launch {
-                    try {
-                        val result = forumManager.reportContent(post.id, "post", reason)
-                        if (result.isSuccess) {
-                            android.widget.Toast.makeText(context, "Report submitted successfully", android.widget.Toast.LENGTH_SHORT).show()
-                        } else {
-                            android.widget.Toast.makeText(context, "Failed to submit report", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
 
     private fun showEditPostDialog(context: android.content.Context, post: ForumPost) {
         val dialog = android.widget.LinearLayout(context).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(32,16,32,0) }

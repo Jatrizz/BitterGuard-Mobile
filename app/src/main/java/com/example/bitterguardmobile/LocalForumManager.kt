@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.example.bitterguardmobile.models.ForumPost
 import com.example.bitterguardmobile.models.ForumComment
-import com.example.bitterguardmobile.models.ForumNotification
-import com.example.bitterguardmobile.models.ForumReport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -152,115 +150,13 @@ class LocalForumManager(private val context: Context) {
         }
     }
     
-    suspend fun toggleBookmark(postId: String): Result<Boolean> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val bookmarks = getStoredBookmarks().toMutableSet()
-                val isBookmarked = bookmarks.contains(postId)
-                if (isBookmarked) {
-                    bookmarks.remove(postId)
-                } else {
-                    bookmarks.add(postId)
-                }
-                saveBookmarks(bookmarks)
-                Result.success(!isBookmarked)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-    }
     
     fun isLiked(postId: String): Boolean {
         return prefs.getBoolean("liked_$postId", false)
     }
     
-    fun isBookmarked(postId: String): Boolean {
-        return getStoredBookmarks().contains(postId)
-    }
     
-    // ==================== BOOKMARKS ====================
     
-    suspend fun getBookmarks(): Result<List<ForumPost>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val bookmarkedIds = getStoredBookmarks()
-                val posts = getStoredPosts().filter { bookmarkedIds.contains(it.id) }
-                Result.success(posts)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-    }
-    
-    // ==================== NOTIFICATIONS ====================
-    
-    suspend fun getNotifications(): Result<List<ForumNotification>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val notifications = getStoredNotifications()
-                Result.success(notifications)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-    }
-    
-    // ==================== REPORTS ====================
-    
-    suspend fun getReports(): Result<List<ForumReport>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val reports = getStoredReports()
-                Result.success(reports)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-    }
-    
-    suspend fun resolveReport(reportId: String): Result<String> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val reports: MutableList<ForumReport> = getStoredReports().toMutableList()
-                val reportIndex = reports.indexOfFirst { it.id == reportId }
-                if (reportIndex != -1) {
-                    reports.removeAt(reportIndex)
-                    saveReports(reports)
-                    Result.success("Report resolved")
-                } else {
-                    Result.failure(Exception("Report not found"))
-                }
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-    }
-    
-    suspend fun reportContent(contentId: String, contentType: String, reason: String): Result<String> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val reportId = UUID.randomUUID().toString()
-                val report = ForumReport(
-                    id = reportId,
-                    reporterUid = "local-user",
-                    reportedContentType = contentType,
-                    reportedContentId = contentId,
-                    reason = reason,
-                    description = reason,
-                    createdAt = System.currentTimeMillis(),
-                    status = "pending"
-                )
-                
-                val reports: MutableList<ForumReport> = getStoredReports().toMutableList()
-                reports.add(report)
-                saveReports(reports)
-                
-                Result.success(reportId)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-    }
     
     // ==================== STORAGE HELPERS ====================
     
@@ -292,45 +188,6 @@ class LocalForumManager(private val context: Context) {
         prefs.edit().putString("comments", commentsJson).apply()
     }
     
-    private fun getStoredBookmarks(): Set<String> {
-        val bookmarksJson = prefs.getString("bookmarks", "[]") ?: "[]"
-        return try {
-            json.decodeFromString<Set<String>>(bookmarksJson)
-        } catch (e: Exception) {
-            emptySet()
-        }
-    }
     
-    private fun saveBookmarks(bookmarks: Set<String>) {
-        val bookmarksJson = json.encodeToString(bookmarks)
-        prefs.edit().putString("bookmarks", bookmarksJson).apply()
-    }
     
-    private fun getStoredNotifications(): List<ForumNotification> {
-        val notificationsJson = prefs.getString("notifications", "[]") ?: "[]"
-        return try {
-            json.decodeFromString<List<ForumNotification>>(notificationsJson)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-    
-    private fun saveNotifications(notifications: List<ForumNotification>) {
-        val notificationsJson = json.encodeToString(notifications)
-        prefs.edit().putString("notifications", notificationsJson).apply()
-    }
-    
-    private fun getStoredReports(): List<ForumReport> {
-        val reportsJson = prefs.getString("reports", "[]") ?: "[]"
-        return try {
-            json.decodeFromString<List<ForumReport>>(reportsJson)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-    
-    private fun saveReports(reports: List<ForumReport>) {
-        val reportsJson = json.encodeToString(reports)
-        prefs.edit().putString("reports", reportsJson).apply()
-    }
 }

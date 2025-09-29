@@ -24,37 +24,90 @@ class ModelUtils(private val context: Context) {
         AppConfig.initialize(context)
     }
     
-    private var module: Module? = null
+    private var leafDetectionModule: Module? = null
+    private var diseaseDetectionModule: Module? = null
     
     /**
-     * Load the PyTorch model from assets
+     * Load both PyTorch models from assets
      */
     fun loadModel(): Boolean {
         return try {
-            val modelFilename = AppConfig.getModelFilename()
-            Log.d(TAG, "Starting model loading process...")
+            Log.d(TAG, "Starting two-stage model loading process...")
+            
+            // Load leaf detection model
+            val leafModelLoaded = loadLeafDetectionModel()
+            if (!leafModelLoaded) {
+                Log.e(TAG, "Failed to load leaf detection model")
+                return false
+            }
+            
+            // Load disease detection model
+            val diseaseModelLoaded = loadDiseaseDetectionModel()
+            if (!diseaseModelLoaded) {
+                Log.e(TAG, "Failed to load disease detection model")
+                return false
+            }
+            
+            Log.d(TAG, "Both models loaded successfully!")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading models: ${e.message}", e)
+            false
+        }
+    }
+    
+    /**
+     * Load the leaf detection model
+     */
+    private fun loadLeafDetectionModel(): Boolean {
+        return try {
+            val modelFilename = AppConfig.getLeafDetectionModel()
+            Log.d(TAG, "Loading leaf detection model: $modelFilename")
             
             // Check if model file exists in assets
             val assetFile = context.assets.list("")?.find { it == modelFilename }
             if (assetFile == null) {
-                Log.e(TAG, "Model file $modelFilename not found in assets")
+                Log.e(TAG, "Leaf detection model file $modelFilename not found in assets")
                 return false
             }
             
-            Log.d(TAG, "Model file found in assets: $modelFilename")
-            
             val modelFile = copyAssetToFilesDir(modelFilename)
-            Log.d(TAG, "Model copied to: ${modelFile.absolutePath}")
-            
-            // Check file size
             val fileSize = modelFile.length()
-            Log.d(TAG, "Model file size: ${fileSize / (1024 * 1024)} MB")
+            Log.d(TAG, "Leaf detection model file size: ${fileSize / (1024 * 1024)} MB")
             
-            module = Module.load(modelFile.absolutePath)
-            Log.d(TAG, "Model loaded successfully into PyTorch Module")
+            leafDetectionModule = Module.load(modelFile.absolutePath)
+            Log.d(TAG, "Leaf detection model loaded successfully")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading model: ${e.message}", e)
+            Log.e(TAG, "Error loading leaf detection model: ${e.message}", e)
+            false
+        }
+    }
+    
+    /**
+     * Load the disease detection model
+     */
+    private fun loadDiseaseDetectionModel(): Boolean {
+        return try {
+            val modelFilename = AppConfig.getDiseaseDetectionModel()
+            Log.d(TAG, "Loading disease detection model: $modelFilename")
+            
+            // Check if model file exists in assets
+            val assetFile = context.assets.list("")?.find { it == modelFilename }
+            if (assetFile == null) {
+                Log.e(TAG, "Disease detection model file $modelFilename not found in assets")
+                return false
+            }
+            
+            val modelFile = copyAssetToFilesDir(modelFilename)
+            val fileSize = modelFile.length()
+            Log.d(TAG, "Disease detection model file size: ${fileSize / (1024 * 1024)} MB")
+            
+            diseaseDetectionModule = Module.load(modelFile.absolutePath)
+            Log.d(TAG, "Disease detection model loaded successfully")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading disease detection model: ${e.message}", e)
             false
         }
     }
@@ -107,52 +160,117 @@ class ModelUtils(private val context: Context) {
     }
     
     /**
-     * Run inference on the model
+     * Run two-stage inference: First detect bitter gourd leaf, then detect disease
      */
     fun runInference(bitmap: Bitmap): FloatArray? {
         return try {
-            module?.let { model ->
-                Log.d(TAG, "Starting inference with bitmap size: ${bitmap.width}x${bitmap.height}")
+            Log.d(TAG, "=== STARTING TWO-STAGE INFERENCE ===")
+            Log.d(TAG, "Bitmap size: ${bitmap.width}x${bitmap.height}")
+            Log.d(TAG, "Leaf detection model loaded: ${leafDetectionModule != null}")
+            Log.d(TAG, "Disease detection model loaded: ${diseaseDetectionModule != null}")
+            
+            // Stage 1: Check if bitter gourd leaf is detected
+            Log.d(TAG, "STAGE 1: Running leaf detection...")
+            val leafDetectionResult = runLeafDetection(bitmap)
+            if (leafDetectionResult == null) {
+                Log.e(TAG, "Leaf detection failed")
+                return null
+            }
+            
+            val leafClasses = AppConfig.getLeafClasses()
+            val leafPredictionClass = getPredictionClass(leafDetectionResult)
+            val leafClassName = leafClasses[leafPredictionClass]
+            val leafConfidence = getPredictionConfidence(leafDetectionResult)
+            
+            Log.d(TAG, "Leaf detection result: $leafClassName (confidence: ${leafConfidence * 100}%)")
+            Log.d(TAG, "Leaf detection raw output: ${leafDetectionResult.joinToString(", ")}")
+            
+            // Add confidence threshold for more reliable detection
+            val confidenceThreshold = 0.7f // 70% confidence threshold (higher for more accuracy)
+            
+            // If no bitter gourd leaf detected OR confidence is too low, return special result
+            if (leafPredictionClass != 0 || leafConfidence < confidenceThreshold) { 
+                Log.d(TAG, "No bitter gourd leaf detected (class: $leafPredictionClass, confidence: ${leafConfidence * 100}%)")
+                Log.d(TAG, "Stopping detection - not proceeding to disease detection")
+                // Return a special array indicating "no bitter gourd leaf"
+                return floatArrayOf(-1.0f, -1.0f, -1.0f, -1.0f) // Special marker
+            }
+            
+            Log.d(TAG, "Bitter gourd leaf confirmed with high confidence (${leafConfidence * 100}%) - proceeding to disease detection")
+            
+            // Stage 2: Run disease detection
+            Log.d(TAG, "STAGE 2: Bitter gourd leaf confirmed, running disease detection...")
+            val diseaseDetectionResult = runDiseaseDetection(bitmap)
+            if (diseaseDetectionResult == null) {
+                Log.e(TAG, "Disease detection failed")
+                return null
+            }
+            
+            val diseaseClasses = AppConfig.getDiseaseClasses()
+            val diseasePredictionClass = getPredictionClass(diseaseDetectionResult)
+            val diseaseClassName = diseaseClasses[diseasePredictionClass]
+            val diseaseConfidence = getPredictionConfidence(diseaseDetectionResult)
+            
+            Log.d(TAG, "Disease detection result: $diseaseClassName (confidence: ${diseaseConfidence * 100}%)")
+            
+            diseaseDetectionResult
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during two-stage inference: ${e.message}", e)
+            null
+        }
+    }
+    
+    /**
+     * Run leaf detection inference
+     */
+    private fun runLeafDetection(bitmap: Bitmap): FloatArray? {
+        return try {
+            leafDetectionModule?.let { model ->
+                Log.d(TAG, "Running leaf detection inference...")
                 
                 val inputTensor = preprocessImage(bitmap)
-                Log.d(TAG, "Input tensor created with shape: ${inputTensor.shape().contentToString()}")
-                
                 val inputIValue = IValue.from(inputTensor)
                 
-                // Run inference
-                Log.d(TAG, "Running model forward pass...")
                 val outputIValue = model.forward(inputIValue)
                 val outputTensor = outputIValue.toTensor()
-                
-                Log.d(TAG, "Output tensor shape: ${outputTensor.shape().contentToString()}")
-                
-                // Convert output tensor to float array
                 val outputArray = outputTensor.getDataAsFloatArray()
                 
-                Log.d(TAG, "Output array size: ${outputArray.size}")
-                Log.d(TAG, "Output array values: ${outputArray.take(10).joinToString(", ")}...")
-                
-                // Validate output
-                if (outputArray.isEmpty()) {
-                    Log.e(TAG, "Output array is empty")
-                    return null
-                }
-                
-                // Check if all values are the same (indicates potential issue)
-                val firstValue = outputArray[0]
-                val allSame = outputArray.all { it == firstValue }
-                if (allSame) {
-                    Log.w(TAG, "All output values are the same: $firstValue")
-                }
-                
-                Log.d(TAG, "Inference completed successfully")
+                Log.d(TAG, "Leaf detection output: ${outputArray.joinToString(", ")}")
                 outputArray
             } ?: run {
-                Log.e(TAG, "Model not loaded")
+                Log.e(TAG, "Leaf detection model not loaded")
                 null
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error during inference: ${e.message}", e)
+            Log.e(TAG, "Error during leaf detection: ${e.message}", e)
+            null
+        }
+    }
+    
+    /**
+     * Run disease detection inference
+     */
+    private fun runDiseaseDetection(bitmap: Bitmap): FloatArray? {
+        return try {
+            diseaseDetectionModule?.let { model ->
+                Log.d(TAG, "Running disease detection inference...")
+                
+                val inputTensor = preprocessImage(bitmap)
+                val inputIValue = IValue.from(inputTensor)
+                
+                val outputIValue = model.forward(inputIValue)
+                val outputTensor = outputIValue.toTensor()
+                val outputArray = outputTensor.getDataAsFloatArray()
+                
+                Log.d(TAG, "Disease detection output: ${outputArray.joinToString(", ")}")
+                outputArray
+            } ?: run {
+                Log.e(TAG, "Disease detection model not loaded")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during disease detection: ${e.message}", e)
             null
         }
     }
@@ -275,20 +393,71 @@ class ModelUtils(private val context: Context) {
     }
     
     /**
-     * Check if model is loaded
+     * Check if both models are loaded
      */
     fun isModelLoaded(): Boolean {
-        val loaded = module != null
-        Log.d(TAG, "Model loaded status: $loaded")
-        return loaded
+        val leafLoaded = leafDetectionModule != null
+        val diseaseLoaded = diseaseDetectionModule != null
+        val bothLoaded = leafLoaded && diseaseLoaded
+        Log.d(TAG, "Models loaded status - Leaf: $leafLoaded, Disease: $diseaseLoaded, Both: $bothLoaded")
+        return bothLoaded
+    }
+    
+    /**
+     * Get disease name from prediction class
+     */
+    fun getDiseaseName(predictionClass: Int): String {
+        val diseaseClasses = AppConfig.getDiseaseClasses()
+        return if (predictionClass >= 0 && predictionClass < diseaseClasses.size) {
+            diseaseClasses[predictionClass]
+        } else {
+            "Unknown"
+        }
+    }
+    
+    /**
+     * Get leaf detection result message
+     */
+    fun getLeafDetectionMessage(outputArray: FloatArray): String {
+        // Check if this is the special "no bitter gourd leaf" marker
+        if (outputArray.size == 4 && outputArray.all { it == -1.0f }) {
+            return "Not a Bitter Gourd Leaf"
+        }
+        
+        val leafClasses = arrayOf("Bitter Gourd", "Not")
+        val predictionClass = getPredictionClass(outputArray)
+        val confidence = getPredictionConfidence(outputArray)
+        
+        return if (predictionClass == 0) { // Bitter Gourd detected
+            "Bitter gourd leaf detected (${(confidence * 100).toInt()}%)"
+        } else {
+            "Not a Bitter Gourd Leaf"
+        }
+    }
+    
+    /**
+     * Get disease detection result message
+     */
+    fun getDiseaseDetectionMessage(outputArray: FloatArray): String {
+        val diseaseClasses = AppConfig.getDiseaseClasses()
+        val predictionClass = getPredictionClass(outputArray)
+        val confidence = getPredictionConfidence(outputArray)
+        
+        return if (predictionClass == 1) { // Fresh Leaf (no disease)
+            "No disease detected - Fresh Leaf (${(confidence * 100).toInt()}%)"
+        } else {
+            val diseaseName = getDiseaseName(predictionClass)
+            "$diseaseName detected (${(confidence * 100).toInt()}%)"
+        }
     }
     
     /**
      * Release model resources
      */
     fun releaseModel() {
-        module = null
-        Log.d(TAG, "Model released")
+        leafDetectionModule = null
+        diseaseDetectionModule = null
+        Log.d(TAG, "Both models released")
     }
 
     fun close() {
@@ -302,22 +471,22 @@ class ModelUtils(private val context: Context) {
         val diagnostics = StringBuilder()
         
         try {
-            // Check if model file exists in assets
-            val modelFilename = AppConfig.getModelFilename()
+            // Check leaf detection model
+            val leafModelFilename = AppConfig.getLeafDetectionModel()
             val assetFiles = context.assets.list("")
-            val modelFileExists = assetFiles?.contains(modelFilename) ?: false
-            diagnostics.append("Model file in assets: ${if (modelFileExists) "✓" else "✗"}\n")
+            val leafModelExists = assetFiles?.contains(leafModelFilename) ?: false
+            diagnostics.append("Leaf detection model in assets: ${if (leafModelExists) "✓" else "✗"}\n")
             
-            if (modelFileExists) {
-                // Check file size
-                context.assets.open(modelFilename).use { input ->
-                    val size = input.available()
-                    diagnostics.append("Model file size: ${size / (1024 * 1024)} MB\n")
-                }
-            }
+            // Check disease detection model
+            val diseaseModelFilename = AppConfig.getDiseaseDetectionModel()
+            val diseaseModelExists = assetFiles?.contains(diseaseModelFilename) ?: false
+            diagnostics.append("Disease detection model in assets: ${if (diseaseModelExists) "✓" else "✗"}\n")
             
-            // Check if model is loaded
-            diagnostics.append("Model loaded: ${if (isModelLoaded()) "✓" else "✗"}\n")
+            // Check if both models are loaded
+            val leafLoaded = leafDetectionModule != null
+            val diseaseLoaded = diseaseDetectionModule != null
+            diagnostics.append("Leaf detection model loaded: ${if (leafLoaded) "✓" else "✗"}\n")
+            diagnostics.append("Disease detection model loaded: ${if (diseaseLoaded) "✓" else "✗"}\n")
             
             // Test PyTorch availability
             try {
@@ -330,6 +499,70 @@ class ModelUtils(private val context: Context) {
         } catch (e: Exception) {
             diagnostics.append("Diagnostic error: ${e.message}\n")
         }
+        
+        return diagnostics.toString()
+    }
+    
+    /**
+     * Test leaf detection with a specific image
+     */
+    fun testLeafDetection(bitmap: Bitmap): String {
+        return try {
+            val result = runLeafDetection(bitmap)
+            if (result != null) {
+                val leafClasses = AppConfig.getLeafClasses()
+                val predictionClass = getPredictionClass(result)
+                val confidence = getPredictionConfidence(result)
+                val className = leafClasses[predictionClass]
+                
+                "Leaf Detection Test:\n" +
+                "Raw output: ${result.joinToString(", ")}\n" +
+                "Predicted class: $predictionClass ($className)\n" +
+                "Confidence: ${(confidence * 100).toInt()}%\n" +
+                "Will proceed to disease detection: ${predictionClass == 0 && confidence >= 0.7f}"
+            } else {
+                "Leaf detection failed"
+            }
+        } catch (e: Exception) {
+            "Leaf detection error: ${e.message}"
+        }
+    }
+    
+    /**
+     * Verify both models are loaded and working
+     */
+    fun verifyTwoStageSystem(): String {
+        val diagnostics = StringBuilder()
+        
+        diagnostics.append("=== TWO-STAGE SYSTEM VERIFICATION ===\n")
+        
+        // Check model loading status
+        val leafLoaded = leafDetectionModule != null
+        val diseaseLoaded = diseaseDetectionModule != null
+        
+        diagnostics.append("Leaf Detection Model: ${if (leafLoaded) "✓ LOADED" else "✗ NOT LOADED"}\n")
+        diagnostics.append("Disease Detection Model: ${if (diseaseLoaded) "✓ LOADED" else "✗ NOT LOADED"}\n")
+        
+        // Check configuration
+        val leafModelFile = AppConfig.getLeafDetectionModel()
+        val diseaseModelFile = AppConfig.getDiseaseDetectionModel()
+        
+        diagnostics.append("Leaf Model File: $leafModelFile\n")
+        diagnostics.append("Disease Model File: $diseaseModelFile\n")
+        
+        // Check if both models exist in assets
+        try {
+            val assetFiles = context.assets.list("")
+            val leafExists = assetFiles?.contains(leafModelFile) ?: false
+            val diseaseExists = assetFiles?.contains(diseaseModelFile) ?: false
+            
+            diagnostics.append("Leaf Model in Assets: ${if (leafExists) "✓" else "✗"}\n")
+            diagnostics.append("Disease Model in Assets: ${if (diseaseExists) "✓" else "✗"}\n")
+        } catch (e: Exception) {
+            diagnostics.append("Error checking assets: ${e.message}\n")
+        }
+        
+        diagnostics.append("System Ready: ${if (leafLoaded && diseaseLoaded) "✓ YES" else "✗ NO"}\n")
         
         return diagnostics.toString()
     }

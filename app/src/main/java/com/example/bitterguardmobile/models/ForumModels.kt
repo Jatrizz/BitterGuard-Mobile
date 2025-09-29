@@ -22,8 +22,6 @@ data class ForumPost(
     val tags: List<String> = emptyList(),
     val is_pinned: Boolean = false,
     val is_locked: Boolean = false,
-    val is_reported: Boolean = false,
-    val reported_count: Int = 0,
     val attachments: List<String> = emptyList()
 ) : Parcelable {
     // Convenience properties for backward compatibility
@@ -36,8 +34,6 @@ data class ForumPost(
     val viewCount: Int get() = view_count
     val isPinned: Boolean get() = is_pinned
     val isLocked: Boolean get() = is_locked
-    val isReported: Boolean get() = is_reported
-    val reportedCount: Int get() = reported_count
     
     private fun parseTimestamp(timestamp: String): Long {
         if (timestamp.isEmpty()) return System.currentTimeMillis()
@@ -89,7 +85,6 @@ data class ForumComment(
     val updated_at: String = "",
     val like_count: Int = 0,
     val is_edited: Boolean = false,
-    val is_reported: Boolean = false,
     val depth: Int = 0, // For comment threading
     val replies: List<ForumComment> = emptyList()
 ) : Parcelable {
@@ -102,7 +97,6 @@ data class ForumComment(
     val updatedAt: Long get() = updated_at.toLongOrNull() ?: System.currentTimeMillis()
     val likeCount: Int get() = like_count
     val isEdited: Boolean get() = is_edited
-    val isReported: Boolean get() = is_reported
 }
 
 @Parcelize
@@ -117,20 +111,6 @@ data class ForumCategory(
     val order: Int = 0
 ) : Parcelable
 
-@Parcelize
-data class ForumReport(
-    val id: String = "",
-    val reporterUid: String = "",
-    val reportedContentType: String = "", // "post" or "comment"
-    val reportedContentId: String = "",
-    val reason: String = "",
-    val description: String = "",
-    val createdAt: Long = System.currentTimeMillis(),
-    val status: String = "pending", // "pending", "reviewed", "resolved", "dismissed"
-    val moderatorUid: String = "",
-    val moderatorNotes: String = "",
-    val resolvedAt: Long = 0L
-) : Parcelable
 
 @Parcelize
 data class ForumUser(
@@ -161,33 +141,10 @@ data class ForumUserPreferences(
 ) : Parcelable
 
 @Parcelize
-data class ForumBookmark(
-    val id: String = "",
-    val userId: String = "",
-    val postId: String = "",
-    val createdAt: Long = System.currentTimeMillis()
-) : Parcelable
-
-@Parcelize
 data class ForumLike(
     val id: String = "",
     val userId: String = "",
     val contentType: String = "", // "post" or "comment"
     val contentId: String = "",
     val createdAt: Long = System.currentTimeMillis()
-) : Parcelable
-
-@Parcelize
-data class ForumNotification(
-    val id: String = "",
-    val userId: String = "",
-    val type: String = "", // "comment", "like", "mention", "reply"
-    val title: String = "",
-    val message: String = "",
-    val relatedPostId: String = "",
-    val relatedCommentId: String = "",
-    val fromUserId: String = "",
-    val fromUserName: String = "",
-    val createdAt: Long = System.currentTimeMillis(),
-    val isRead: Boolean = false
 ) : Parcelable

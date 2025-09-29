@@ -202,80 +202,6 @@ class SimpleForumManager(private val context: Context) {
         }
     }
     
-    // ==================== NOTIFICATIONS ====================
-    
-    suspend fun getNotifications(): Result<List<ForumNotification>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                Log.d(TAG, "Retrieved notifications successfully")
-                Result.success(emptyList())
-            } catch (e: Exception) {
-                Log.e(TAG, "Error getting notifications: ${e.message}", e)
-                Result.failure(e)
-            }
-        }
-    }
-    
-    // ==================== BOOKMARKS ====================
-    
-    suspend fun getBookmarks(): Result<List<ForumBookmark>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                Log.d(TAG, "Retrieved bookmarks successfully")
-                Result.success(emptyList())
-            } catch (e: Exception) {
-                Log.e(TAG, "Error getting bookmarks: ${e.message}", e)
-                Result.failure(e)
-            }
-        }
-    }
-    
-    // ==================== REPORTS ====================
-    
-    suspend fun getReports(status: String = "pending"): Result<List<ForumReport>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val filters = mapOf("status" to "eq.$status")
-                val result = supabaseClient.get("forum_reports", filters)
-                if (result.isSuccess) {
-                    Log.d(TAG, "Retrieved reports successfully")
-                    Result.success(emptyList())
-                } else {
-                    Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error getting reports: ${e.message}", e)
-                Result.failure(e)
-            }
-        }
-    }
-    
-    suspend fun updateReportStatus(reportId: String, status: String, moderatorNote: String = ""): Result<String> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val updateData = buildJsonObject {
-                    put("status", status)
-                    put("moderator_note", moderatorNote)
-                    put("resolved_at", System.currentTimeMillis().toString())
-                }
-                
-                val result = supabaseClient.put("forum_reports", reportId, updateData)
-                if (result.isSuccess) {
-                    Log.d(TAG, "Report status updated successfully")
-                    Result.success("success")
-                } else {
-                    Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error updating report status: ${e.message}", e)
-                Result.failure(e)
-            }
-        }
-    }
-    
-    suspend fun resolveReport(reportId: String, status: String, moderatorNote: String = ""): Result<String> {
-        return updateReportStatus(reportId, status, moderatorNote)
-    }
     
     // ==================== ADDITIONAL METHODS ====================
     
@@ -291,15 +217,4 @@ class SimpleForumManager(private val context: Context) {
         }
     }
     
-    suspend fun isBookmarked(postId: String): Result<Boolean> {
-        return withContext(Dispatchers.IO) {
-            try {
-                Log.d(TAG, "Checking bookmark status for post: $postId")
-                Result.success(false) // For now, return false
-            } catch (e: Exception) {
-                Log.e(TAG, "Error checking bookmark status: ${e.message}", e)
-                Result.failure(e)
-            }
-        }
-    }
 }

@@ -256,7 +256,7 @@
                         android:foreground="?android:attr/selectableItemBackground"
                         android:orientation="horizontal"
                         android:padding="16dp"
-                        android:visibility="gone">
+                        android:visibility="visible">
 
                         <ImageView
                             android:layout_width="24dp"

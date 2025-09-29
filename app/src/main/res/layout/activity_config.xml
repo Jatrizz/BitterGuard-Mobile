@@ -1,83 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/gradient_background">
+    android:background="#FFFFFF"
+    tools:context=".ConfigActivity">
 
     <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary_green"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:background="#4CAF50"
+        android:elevation="4dp"
+        app:layout_constraintTop_toTopOf="parent"
         app:title="App Configuration"
-        app:navigationIcon="@drawable/ic_back" />
-
-    <!-- Header -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="Configuration Settings"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/primary_green"
-        android:gravity="center" />
-
-    <!-- Description -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="Modify app settings for testing and debugging. Changes are saved automatically."
-        android:textSize="14sp"
-        android:textColor="@color/text_secondary"
-        android:gravity="center" />
+        app:titleTextColor="#FFFFFF" />
 
     <!-- Configuration List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/configRecyclerView"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginHorizontal="16dp"
-        android:background="@drawable/rounded_dialog_bg"
-        android:padding="8dp" />
+        android:padding="16dp"
+        app:layout_constraintBottom_toTopOf="@id/buttonContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
-    <!-- Action Buttons -->
+    <!-- Button Container -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/buttonContainer"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_margin="16dp"
-        android:gravity="center">
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <Button
             android:id="@+id/btnResetConfig"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="#FF5722"
             android:text="Reset to Defaults"
-            android:background="@drawable/rounded_button"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/error_red" />
+            android:textColor="#FFFFFF" />
 
         <Button
             android:id="@+id/btnSaveConfig"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="#4CAF50"
             android:text="Save Changes"
-            android:background="@drawable/rounded_button"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/primary_green" />
+            android:textColor="#FFFFFF" />
 
     </LinearLayout>
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

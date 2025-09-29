@@ -339,16 +339,6 @@ class ForumActivity : BaseActivity() {
                 }
                 true
             }
-            R.id.action_notifications -> {
-                val intent = Intent(this, ForumNotificationsActivity::class.java)
-                startActivity(intent)
-                true
-            }
-            R.id.action_bookmarks -> {
-                val intent = Intent(this, ForumBookmarksActivity::class.java)
-                startActivity(intent)
-                true
-            }
             else -> super.onOptionsItemSelected(item)
         }
     }

@@ -1,49 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="12dp"
     android:layout_marginBottom="8dp"
-    android:background="@drawable/rounded_input_outline"
-    android:backgroundTint="@android:color/white">
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
 
-    <!-- Config Name -->
-    <TextView
-        android:id="@+id/configName"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Config Name"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@color/primary_green"
-        android:layout_marginBottom="4dp" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <!-- Config Type -->
-    <TextView
-        android:id="@+id/configType"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="TEXT"
-        android:textSize="12sp"
-        android:textColor="@color/text_secondary"
-        android:background="@drawable/rounded_button"
-        android:backgroundTint="@color/light_gray"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="2dp"
-        android:layout_marginBottom="8dp" />
+        <TextView
+            android:id="@+id/configKey"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Config Key"
+            android:textColor="#333333"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-    <!-- Config Value Input -->
-    <EditText
-        android:id="@+id/configValue"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Config Value"
-        android:textSize="14sp"
-        android:textColor="@color/text_primary"
-        android:background="@drawable/input_background"
-        android:padding="12dp"
-        android:singleLine="true"
-        android:imeOptions="actionDone" />
+        <TextView
+            android:id="@+id/configDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Configuration description"
+            android:textColor="#666666"
+            android:textSize="14sp" />
 
-</LinearLayout>
+        <EditText
+            android:id="@+id/configValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@android:drawable/edit_text"
+            android:hint="Enter value"
+            android:inputType="text"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

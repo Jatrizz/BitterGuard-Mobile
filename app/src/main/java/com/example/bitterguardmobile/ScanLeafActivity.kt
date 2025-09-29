@@ -419,11 +419,20 @@ class ScanLeafActivity : AppCompatActivity() {
                 } else {
                     val outputArray = modelUtils.runInference(bitmap)
                     if (outputArray != null && outputArray.isNotEmpty()) {
-                        val predictionClass = modelUtils.getPredictionClass(outputArray)
-                        val confidence = modelUtils.getPredictionConfidence(outputArray)
-                        diseaseName = getDiseaseName(predictionClass)
-                        confidencePercent = String.format("%.1f%%", confidence * 100)
-                        Log.d("ScanLeafActivity", "Inference: Class $predictionClass, Conf $confidence, Output: ${outputArray.joinToString()}")
+                        // Check if this is the special "no bitter gourd leaf" marker
+                        if (outputArray.size == 4 && outputArray.all { it == -1.0f }) {
+                            diseaseName = "Not a Bitter Gourd Leaf"
+                            confidencePercent = "N/A"
+                            Log.d("ScanLeafActivity", "Result: Not a Bitter Gourd Leaf")
+                        } else {
+                            // Normal disease detection result
+                            val predictionClass = modelUtils.getPredictionClass(outputArray)
+                            val confidence = modelUtils.getPredictionConfidence(outputArray)
+                            diseaseName = getDiseaseName(predictionClass)
+                            confidencePercent = String.format("%.1f%%", confidence * 100)
+                            Log.d("ScanLeafActivity", "Disease detection result: $diseaseName (${confidencePercent})")
+                        }
+                        Log.d("ScanLeafActivity", "Two-stage inference result: $diseaseName, Confidence: $confidencePercent")
                     } else {
                         Log.w("ScanLeafActivity", "Real inference failed or returned empty, using mock as fallback.")
                         isUsingMockInference = true

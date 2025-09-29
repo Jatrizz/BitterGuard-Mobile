@@ -111,15 +111,6 @@
             android:exported="false"
             android:theme="@style/Theme.BitterGuardMobile" />
         
-        <activity
-            android:name=".ForumNotificationsActivity"
-            android:exported="false"
-            android:theme="@style/Theme.BitterGuardMobile" />
-        
-        <activity
-            android:name=".ForumBookmarksActivity"
-            android:exported="false"
-            android:theme="@style/Theme.BitterGuardMobile" />
         
         <activity
             android:name=".SettingsActivity"
