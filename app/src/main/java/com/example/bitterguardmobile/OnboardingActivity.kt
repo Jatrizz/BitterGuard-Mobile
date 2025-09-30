@@ -65,6 +65,11 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun startMainActivity() {
+        // Mark onboarding as shown so it doesn't show again
+        getSharedPreferences("app_prefs", MODE_PRIVATE)
+            .edit()
+            .putBoolean("onboarding_shown", true)
+            .apply()
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()

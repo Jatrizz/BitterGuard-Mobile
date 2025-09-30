@@ -3,7 +3,6 @@ package com.example.bitterguardmobile
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -26,7 +25,6 @@ class LoginActivity : AppCompatActivity() {
 		val btnLogin = findViewById<Button>(R.id.btnLogin)
         val btnSignUp = findViewById<TextView>(R.id.btnSignUp)
         val btnOffline = findViewById<TextView>(R.id.btnContinueOfflineLogin)
-		val remember = findViewById<CheckBox>(R.id.checkboxRememberMe)
 
 		btnLogin.setOnClickListener {
 			val identifier = inputPhoneOrEmail.text.toString().trim()
@@ -50,9 +48,8 @@ class LoginActivity : AppCompatActivity() {
 				runOnUiThread {
 					btnLogin.isEnabled = true
 					if (result.success) {
-						if (!remember.isChecked) {
-							// nothing; tokens are stored already. In future, implement remember toggle.
-						}
+						// Clear offline mode on successful login
+						getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("offline_mode", false).apply()
 						startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
 						finish()
 					} else {
@@ -66,10 +63,10 @@ class LoginActivity : AppCompatActivity() {
 			startActivity(Intent(this, RegisterActivity::class.java))
 		}
 
-		btnOffline.setOnClickListener {
-			startActivity(Intent(this, HomeActivity::class.java))
-			finish()
-		}
+        btnOffline.setOnClickListener {
+            startActivity(Intent(this, HomeActivity::class.java))
+            finish()
+        }
 	}
 
 	private fun synthesizeEmailFromPhone(phone: String): String {

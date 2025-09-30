@@ -27,22 +27,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Email -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Email"
-            app:startIconDrawable="@android:drawable/ic_dialog_email">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editEmail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textEmailAddress"
-                android:maxLines="1" />
-
-        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Phone -->
         <com.google.android.material.textfield.TextInputLayout
@@ -82,7 +66,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Note: Email changes will require re-authentication. Phone number is used for login."
+            android:text="Note: Phone number is used for login and account verification."
             android:textColor="#666666"
             android:textSize="12sp"
             android:layout_marginTop="8dp" />

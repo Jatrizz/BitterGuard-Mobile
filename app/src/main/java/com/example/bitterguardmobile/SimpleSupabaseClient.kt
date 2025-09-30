@@ -198,6 +198,23 @@ class SimpleSupabaseClient {
     }
     
     /**
+     * Request a password reset email via Supabase Auth recover endpoint
+     */
+    suspend fun requestPasswordReset(email: String, redirectTo: String? = null): Boolean {
+        return try {
+            val payload = buildJsonObject {
+                put("email", email)
+                if (redirectTo != null) put("redirect_to", redirectTo)
+            }
+            val res = postAuth("recover", payload)
+            res.isSuccess
+        } catch (e: Exception) {
+            Log.e(TAG, "Password reset error: ${e.message}", e)
+            false
+        }
+    }
+    
+    /**
      * PUT request to Supabase
      */
     suspend fun put(table: String, id: String, data: JsonObject): Result<String> {

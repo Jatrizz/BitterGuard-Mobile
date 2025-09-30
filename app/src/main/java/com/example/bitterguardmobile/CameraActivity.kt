@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.os.Environment
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -24,6 +25,12 @@ import androidx.compose.ui.semantics.text
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.bumptech.glide.Glide
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.cancel
 //import androidx.glance.visibility
 import java.io.File
 import java.io.FileOutputStream
@@ -40,6 +47,9 @@ class CameraActivity : AppCompatActivity() {
 
     // This will hold the URI of the selected/captured image to be passed to ScanResultActivity
     private var imageUriToScan: Uri? = null
+    
+    // Coroutine scope for location operations
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     companion object {
         // Keep for legacy permission handling if any part still uses it,
@@ -72,29 +82,34 @@ class CameraActivity : AppCompatActivity() {
             }
         }
 
+    private val requestLocationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                // Location permission granted, proceed with scan
+                navigateToScanResultWithLocation()
+            } else {
+                // Location permission denied, proceed without location
+                navigateToScanResultWithLocation()
+            }
+        }
+
     private val takePictureLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                // For ACTION_IMAGE_CAPTURE without a pre-defined URI, the image is often returned as a Bitmap in "data" extra.
-                // This is typically a thumbnail. For full-size images, use FileProvider (handled in openCameraInternal if you switch).
-                val imageBitmap = result.data?.extras?.get("data") as? Bitmap
-                if (imageBitmap != null) {
-                    // Save this bitmap to a temp file and get its content URI
-                    imageUriToScan = saveBitmapToTempFile(imageBitmap)
-                    if (imageUriToScan != null) {
-                        updatePreviewWithUri(imageUriToScan!!) // Update preview using the URI
-                        Toast.makeText(this, "Photo captured!", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "Failed to save captured photo.", Toast.LENGTH_SHORT).show()
-                    }
-                } else if (currentPhotoUri != null) {
-                    // If openCameraInternal was set up to save to currentPhotoUri (FileProvider for full-size)
+                if (currentPhotoUri != null) {
                     imageUriToScan = currentPhotoUri
                     updatePreviewWithUri(imageUriToScan!!)
-                    Toast.makeText(this, "Full-size photo captured!", Toast.LENGTH_SHORT).show()
-                    currentPhotoUri = null // Reset for next capture
+                    Toast.makeText(this, getString(R.string.photo_captured_successfully), Toast.LENGTH_SHORT).show()
+                    currentPhotoUri = null
                 } else {
-                    Toast.makeText(this, "Failed to get photo.", Toast.LENGTH_SHORT).show()
+                    // Fallback for devices returning a thumbnail only (rare once EXTRA_OUTPUT is used)
+                    val imageBitmap = result.data?.extras?.get("data") as? Bitmap
+                    if (imageBitmap != null) {
+                        imageUriToScan = saveBitmapToTempFile(imageBitmap)
+                        imageUriToScan?.let { updatePreviewWithUri(it) }
+                    } else {
+                        Toast.makeText(this, getString(R.string.camera_error), Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -105,9 +120,9 @@ class CameraActivity : AppCompatActivity() {
                 result.data?.data?.let { uri ->
                     imageUriToScan = uri
                     updatePreviewWithUri(uri)
-                    Toast.makeText(this, "Image selected!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.image_selected), Toast.LENGTH_SHORT).show()
                 } ?: run {
-                    Toast.makeText(this, "Failed to get image from gallery.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.gallery_permission_denied), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -142,7 +157,7 @@ class CameraActivity : AppCompatActivity() {
         }
         btnScan.setOnClickListener {
             if (imageUriToScan != null) {
-                navigateToScanResult(imageUriToScan!!)
+                checkLocationPermissionAndNavigate()
             } else {
                 Toast.makeText(this, "Please select or capture an image first", Toast.LENGTH_SHORT).show()
             }
@@ -156,8 +171,8 @@ class CameraActivity : AppCompatActivity() {
             }
             ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) -> {
                 showPermissionDeniedDialog(
-                    "Camera Permission Required",
-                    "Camera permission is essential for capturing photos. Please grant the permission to proceed."
+                    getString(R.string.permission_required),
+                    getString(R.string.camera_permission_denied)
                 ) { requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA) } // Provide action to re-request
             }
             else -> {
@@ -181,8 +196,8 @@ class CameraActivity : AppCompatActivity() {
             }
             ActivityCompat.shouldShowRequestPermissionRationale(this, permissionToRequest) -> {
                 showPermissionDeniedDialog(
-                    "Gallery Permission Required",
-                    "Access to your gallery is needed to select photos. Please grant the permission."
+                    getString(R.string.permission_required),
+                    getString(R.string.gallery_permission_denied)
                 ) { requestGalleryPermissionLauncher.launch(permissionToRequest) } // Provide action to re-request
             }
             else -> {
@@ -192,54 +207,45 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun openCameraInternal() {
-        // Option 1: Capture thumbnail (simpler, what you had with cameraResultLauncher)
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        if (intent.resolveActivity(packageManager) != null) {
-            takePictureLauncher.launch(intent)
-        } else {
-            Toast.makeText(this, "No camera app found.", Toast.LENGTH_SHORT).show()
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                val photoFile: File? = try {
+                    createImageFile()
+                } catch (ex: IOException) {
+                    Log.e("CameraActivity", "Error creating image file", ex)
+                    null
+                }
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        this,
+                        "${applicationContext.packageName}.fileprovider",
+                        it
+                    )
+                    currentPhotoUri = photoURI
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    // Grant URI permissions to camera activity
+                    takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    takePictureLauncher.launch(takePictureIntent)
+                } ?: run {
+                    Toast.makeText(this, "Unable to prepare storage for photo.", Toast.LENGTH_SHORT).show()
+                }
+            } ?: run {
+                Toast.makeText(this, "No camera app found.", Toast.LENGTH_SHORT).show()
+            }
         }
-
-        // Option 2: Capture full-size image using FileProvider (more robust)
-        // Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-        //    takePictureIntent.resolveActivity(packageManager)?.also {
-        //        val photoFile: File? = try {
-        //            createImageFile() // A method to create a temporary file
-        //        } catch (ex: IOException) {
-        //            Log.e("CameraActivity", "Error creating image file", ex)
-        //            null
-        //        }
-        //        photoFile?.also {
-        //            val photoURI: Uri = FileProvider.getUriForFile(
-        //                this,
-        //                "${applicationContext.packageName}.fileprovider",
-        //                it
-        //            )
-        //            currentPhotoUri = photoURI // Save for the result
-        //            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-        //            takePictureLauncher.launch(takePictureIntent)
-        //        }
-        //    } ?: run {
-        //        Toast.makeText(this, "No camera app found.", Toast.LENGTH_SHORT).show()
-        //    }
-        // }
     }
 
-    // Example helper function if using FileProvider for full-size camera images
-    // @Throws(IOException::class)
-    // private fun createImageFile(): File {
-    //    // Create an image file name
-    //    val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-    //    val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES) // Or cacheDir
-    //    return File.createTempFile(
-    //        "JPEG_${timeStamp}_",
-    //        ".jpg",
-    //        storageDir
-    //    ).apply {
-    //        // Save a file: path for use with ACTION_VIEW intents
-    //        // currentPhotoPath = absolutePath // If you need the absolute path
-    //    }
-    // }
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        if (storageDir != null && !storageDir.exists()) storageDir.mkdirs()
+        return File.createTempFile(
+            "JPEG_${timeStamp}_",
+            ".jpg",
+            storageDir
+        )
+    }
 
 
     private fun openGalleryInternal() {
@@ -250,16 +256,19 @@ class CameraActivity : AppCompatActivity() {
 
     private fun updatePreviewWithUri(uri: Uri) {
         try {
-            // It's safer to load the URI directly with Glide or decodeStream for Bitmaps
-            // to avoid potential issues with large images or ContentResolver complexities.
-            cameraPreview.setImageURI(uri) // ImageView can often handle content URIs directly
-            cameraPreview.scaleType = ImageView.ScaleType.CENTER_CROP
+            // Display image as-is, respecting EXIF orientation using Glide
+            Glide.with(this)
+                .load(uri)
+                .dontTransform()
+                .into(cameraPreview)
+            cameraPreview.scaleType = ImageView.ScaleType.FIT_CENTER
+            cameraPreview.adjustViewBounds = true
             previewText.visibility = View.GONE // Hide "No image selected"
             instructionText.text = "Image ready to scan"
             btnScan.isEnabled = true
         } catch (e: Exception) {
             Log.e("CameraActivity", "Error updating preview with URI: $uri", e)
-            Toast.makeText(this, "Error displaying image: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
             previewText.visibility = View.VISIBLE
             previewText.text = "Error loading image"
             instructionText.text = "Please try selecting another image."
@@ -267,14 +276,49 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
-    private fun navigateToScanResult(imageUri: Uri) {
-        val intent = Intent(this, ScanResultActivity::class.java).apply {
-            putExtra("imageUri", imageUri.toString())
-            // Pass any other necessary data, like location if captured here
-            // intent.putExtra("location", "Current Location if available") // Example
+    private fun checkLocationPermissionAndNavigate() {
+        if (LocationService.hasLocationPermission(this)) {
+            navigateToScanResultWithLocation()
+        } else {
+            // Ask for location permission
+            AlertDialog.Builder(this)
+                .setTitle("Location Permission (Optional)")
+                .setMessage("Allow access to your location to tag your scan with its location. This is optional.")
+                .setPositiveButton("Allow") { _, _ ->
+                    requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
+                .setNegativeButton("Skip") { _, _ ->
+                    navigateToScanResultWithLocation()
+                }
+                .show()
         }
-        startActivity(intent)
-        // finish() // Optional: Finish CameraActivity so back button from ScanResult goes further back
+    }
+
+    private fun navigateToScanResultWithLocation() {
+        if (imageUriToScan == null) {
+            Toast.makeText(this, "No image to scan", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        coroutineScope.launch {
+            try {
+                val locationString = LocationService.getLocationString(this@CameraActivity)
+                
+                val intent = Intent(this@CameraActivity, ScanResultActivity::class.java).apply {
+                    putExtra("imageUri", imageUriToScan.toString())
+                    putExtra("location", locationString)
+                }
+                startActivity(intent)
+            } catch (e: Exception) {
+                Log.e("CameraActivity", "Error getting location: ${e.message}")
+                // Proceed without location
+                val intent = Intent(this@CameraActivity, ScanResultActivity::class.java).apply {
+                    putExtra("imageUri", imageUriToScan.toString())
+                    putExtra("location", "Location not available")
+                }
+                startActivity(intent)
+            }
+        }
     }
 
     private fun saveBitmapToTempFile(bitmap: Bitmap): Uri? {
@@ -289,7 +333,7 @@ class CameraActivity : AppCompatActivity() {
             FileProvider.getUriForFile(this, "${applicationContext.packageName}.fileprovider", imageFile)
         } catch (e: IOException) {
             Log.e("CameraActivity", "Error saving bitmap to temp file", e)
-            Toast.makeText(this, "Error preparing image: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
             null
         }
     }
@@ -308,8 +352,8 @@ class CameraActivity : AppCompatActivity() {
                 openCameraInternal() // Or whatever the action was
             } else {
                 showPermissionDeniedDialog(
-                    "Permission Required",
-                    "This permission is needed for the feature to work. Please enable it in settings."
+                    getString(R.string.permission_required),
+                    getString(R.string.permission_denied)
                 )
             }
         }
@@ -344,5 +388,10 @@ class CameraActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        coroutineScope.cancel()
     }
 }

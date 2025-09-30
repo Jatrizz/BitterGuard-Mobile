@@ -56,7 +56,7 @@
                     android:background="#E0E0E0" />
 
                 <LinearLayout
-                    android:id="@+id/contactWhatsApp"
+                    android:id="@+id/contactPhoneJomarr"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clickable="true"
@@ -69,14 +69,14 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_gravity="center_vertical"
-                        android:src="@android:drawable/ic_menu_share" />
+                        android:src="@android:drawable/ic_menu_call" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
-                        android:text="WhatsApp"
+                        android:text="Call Jomarr Jonel R. Paroan: 09984551432"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textSize="16sp" />
                 </LinearLayout>
@@ -87,7 +87,7 @@
                     android:background="#E0E0E0" />
 
                 <LinearLayout
-                    android:id="@+id/visitWebsite"
+                    android:id="@+id/contactPhoneJanna"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clickable="true"
@@ -100,14 +100,14 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_gravity="center_vertical"
-                        android:src="@android:drawable/ic_menu_view" />
+                        android:src="@android:drawable/ic_menu_call" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
-                        android:text="Website"
+                        android:text="Call Janna Tricia C. Pujeda: 09480870179"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textSize="16sp" />
                 </LinearLayout>
@@ -118,7 +118,7 @@
                     android:background="#E0E0E0" />
 
                 <LinearLayout
-                    android:id="@+id/openFacebook"
+                    android:id="@+id/contactPhoneJohn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clickable="true"
@@ -131,76 +131,14 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_gravity="center_vertical"
-                        android:src="@android:drawable/ic_menu_share" />
+                        android:src="@android:drawable/ic_menu_call" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
-                        android:text="Facebook"
-                        android:textColor="?android:attr/textColorPrimary"
-                        android:textSize="16sp" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#E0E0E0" />
-
-                <LinearLayout
-                    android:id="@+id/openTwitter"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center_vertical"
-                        android:src="@android:drawable/ic_menu_share" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:text="Twitter"
-                        android:textColor="?android:attr/textColorPrimary"
-                        android:textSize="16sp" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#E0E0E0" />
-
-                <LinearLayout
-                    android:id="@+id/openInstagram"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center_vertical"
-                        android:src="@android:drawable/ic_menu_share" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:text="Instagram"
+                        android:text="Call John Patrick A. Tubigan: 09777741589"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textSize="16sp" />
                 </LinearLayout>

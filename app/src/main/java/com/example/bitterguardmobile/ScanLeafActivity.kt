@@ -266,8 +266,18 @@ class ScanLeafActivity : AppCompatActivity() {
     private fun checkAndRequestLocationPermissionThenRunInference(imageUri: Uri) {
         Log.d("ScanLeafActivity", "checkAndRequestLocationPermissionThenRunInference called with URI: $imageUri")
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            Log.d("ScanLeafActivity", "Location permission already granted, running inference directly")
-            runModelInference(imageUri, getCurrentLocation())
+            Log.d("ScanLeafActivity", "Location permission already granted, obtaining best/one-time location then running inference")
+            val best = getBestLastKnownLocation()
+            if (best != null) {
+                runModelInference(imageUri, "Lat: ${String.format("%.4f", best.latitude)}, Lon: ${String.format("%.4f", best.longitude)}")
+            } else {
+                requestSingleLocationFix { fresh ->
+                    val locString = if (fresh != null) {
+                        "Lat: ${String.format("%.4f", fresh.latitude)}, Lon: ${String.format("%.4f", fresh.longitude)}"
+                    } else "Location not available"
+                    runOnUiThread { runModelInference(imageUri, locString) }
+                }
+            }
         } else {
             Log.d("ScanLeafActivity", "Location permission not granted, showing dialog")
             // Explain why location is needed (optional, but good practice)
@@ -283,7 +293,17 @@ class ScanLeafActivity : AppCompatActivity() {
                     // For now, if denied, it will use "Location not available".
                     // We'll call runModelInference again in the launcher callback IF granted.
                     // Or, simpler: just get location (which will return "not available" if denied) and proceed.
-                    runModelInference(imageUri, getCurrentLocation()) // Proceed, location will be fetched based on current permission
+                    val best = getBestLastKnownLocation()
+                    if (best != null) {
+                        runModelInference(imageUri, "Lat: ${String.format("%.4f", best.latitude)}, Lon: ${String.format("%.4f", best.longitude)}")
+                    } else {
+                        requestSingleLocationFix { fresh ->
+                            val locString = if (fresh != null) {
+                                "Lat: ${String.format("%.4f", fresh.latitude)}, Lon: ${String.format("%.4f", fresh.longitude)}"
+                            } else "Location not available"
+                            runOnUiThread { runModelInference(imageUri, locString) }
+                        }
+                    }
                 }
                 .setNegativeButton("Skip") { _, _ ->
                     Log.d("ScanLeafActivity", "User skipped location permission, running inference without location")
@@ -557,6 +577,52 @@ class ScanLeafActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("ScanLeafActivity", "Error getting location: ${e.message}")
             "Location not available (Error)"
+        }
+    }
+
+    private fun getBestLastKnownLocation(): android.location.Location? {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return null
+        }
+        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        val providers = locationManager.getProviders(true)
+        var bestLocation: android.location.Location? = null
+        for (provider in providers) {
+            val loc = try { locationManager.getLastKnownLocation(provider) } catch (_: SecurityException) { null } ?: continue
+            if (bestLocation == null || loc.accuracy < bestLocation.accuracy) {
+                bestLocation = loc
+            }
+        }
+        return bestLocation
+    }
+
+    private fun requestSingleLocationFix(onResult: (android.location.Location?) -> Unit) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            onResult(null)
+            return
+        }
+        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        val listener = object : android.location.LocationListener {
+            override fun onLocationChanged(location: android.location.Location) {
+                locationManager.removeUpdates(this)
+                onResult(location)
+            }
+            override fun onProviderDisabled(provider: String) {}
+            override fun onProviderEnabled(provider: String) {}
+            override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+        }
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, listener)
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0L, 0f, listener)
+            // Fallback timeout: stop after 10s if no fix
+            window.decorView.postDelayed({
+                try { locationManager.removeUpdates(listener) } catch (_: Exception) {}
+                onResult(null)
+            }, 10000)
+        } catch (_: SecurityException) {
+            onResult(null)
         }
     }
 

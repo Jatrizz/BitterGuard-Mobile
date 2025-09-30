@@ -67,11 +67,17 @@ class ScanResultActivity : AppCompatActivity() {
         loadModelInBackground()
 
         // --- Determine the source of the scan result ---
+        val transferKey = intent.getStringExtra("transfer_key")
+        val scanResultFromTransfer = transferKey?.let { ScanResultTransfer.take(it) }
         val scanResultFromIntent = intent.getParcelableExtra<ScanResult>("scan_result")
         val imageUriStringFromIntent = intent.getStringExtra("imageUri")
 
-        Log.d("ScanResultActivity", "onCreate: scanResultFromIntent=$scanResultFromIntent, imageUriStringFromIntent=$imageUriStringFromIntent")
-        if (scanResultFromIntent != null) {
+        Log.d("ScanResultActivity", "onCreate: transferKey=$transferKey, scanResultFromTransfer=$scanResultFromTransfer, scanResultFromIntent=$scanResultFromIntent, imageUriStringFromIntent=$imageUriStringFromIntent")
+        if (scanResultFromTransfer != null) {
+            currentScanResult = scanResultFromTransfer
+            imageUriForAnalysis = scanResultFromTransfer.imageUriString?.let { Uri.parse(it) }
+            setupResultDisplay(currentScanResult!!)
+        } else if (scanResultFromIntent != null) {
             // Came from History or somewhere a full ScanResult was passed
             currentScanResult = scanResultFromIntent
             imageUriForAnalysis = scanResultFromIntent.imageUriString?.let { Uri.parse(it) }
@@ -97,8 +103,9 @@ class ScanResultActivity : AppCompatActivity() {
                 location = location
             )
             updateDisplayFields(currentScanResult!!) // Show "Analyzing..."
-            Glide.with(this) // Load the image into view
+            Glide.with(this) // Load the image into view (respect EXIF, no transforms)
                 .load(imageUriForAnalysis)
+                .dontTransform()
                 .placeholder(R.drawable.camera)
                 .error(R.drawable.ic_error_placeholder)
                 .into(resultImage)
@@ -194,16 +201,27 @@ class ScanResultActivity : AppCompatActivity() {
                     outputArray = modelUtils.runMockInference(bitmap)
                 }
 
-                val predictionClass = modelUtils.getPredictionClass(outputArray)
-                val confidence = modelUtils.getPredictionConfidence(outputArray)
+                // Check special marker from two-stage pipeline: no bitter gourd leaf detected
+                val isNoLeafMarker = outputArray.size == 4 && outputArray.all { it == -1.0f }
 
-                val confidenceThreshold = AppConfig.getConfidenceThreshold()
-                val (finalClassName, finalConfidencePercentage) = if (confidence < confidenceThreshold) {
-                    "No disease detected" to String.format(Locale.US, "%.1f%%", confidence * 100)
-                } else if (predictionClass >= 0 && predictionClass < classNames.size) {
-                    classNames[predictionClass] to String.format(Locale.US, "%.1f%%", confidence * 100)
+                val (finalClassName, finalConfidencePercentage) = if (isNoLeafMarker) {
+                    "No bitter gourd leaf detected" to ""
                 } else {
-                    "Unknown Disease" to String.format(Locale.US, "%.1f%%", confidence * 100)
+                    val predictionClass = modelUtils.getPredictionClass(outputArray)
+                    val confidence = modelUtils.getPredictionConfidence(outputArray)
+                    val confidenceThreshold = AppConfig.getConfidenceThreshold()
+
+                    // If low confidence OR model predicts "Fresh Leaf" (index 1) => no disease detected
+                    when {
+                        confidence < confidenceThreshold ->
+                            "No disease detected" to String.format(Locale.US, "%.1f%%", confidence * 100)
+                        predictionClass == 1 ->
+                            "No disease detected" to String.format(Locale.US, "%.1f%%", confidence * 100)
+                        predictionClass >= 0 && predictionClass < classNames.size ->
+                            classNames[predictionClass] to String.format(Locale.US, "%.1f%%", confidence * 100)
+                        else ->
+                            "Unknown Disease" to String.format(Locale.US, "%.1f%%", confidence * 100)
+                    }
                 }
 
                 withContext(Dispatchers.Main) {
@@ -256,11 +274,14 @@ class ScanResultActivity : AppCompatActivity() {
                 .placeholder(R.drawable.camera)
                 .error(R.drawable.ic_error_placeholder)
                 .into(resultImage)
+            resultImage.scaleType = ImageView.ScaleType.FIT_CENTER // Show full image without cropping
+            resultImage.adjustViewBounds = true // Maintain aspect ratio
         } else if (imageSourceBytes != null && imageSourceBytes.isNotEmpty()) {
             try {
                 val bitmap = BitmapFactory.decodeByteArray(imageSourceBytes, 0, imageSourceBytes.size)
                 resultImage.setImageBitmap(bitmap)
-                resultImage.scaleType = ImageView.ScaleType.CENTER_CROP
+                resultImage.scaleType = ImageView.ScaleType.FIT_CENTER // Show full image without cropping
+                resultImage.adjustViewBounds = true // Maintain aspect ratio
             } catch (e: Exception) {
                 Log.e("ScanResultActivity", "Error decoding byte array for display", e)
                 resultImage.setImageResource(R.drawable.ic_error_placeholder)

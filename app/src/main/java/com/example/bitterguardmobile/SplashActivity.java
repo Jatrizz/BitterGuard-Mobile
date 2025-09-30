@@ -12,8 +12,10 @@ public class SplashActivity extends Activity {
         setContentView(R.layout.activity_splash);
 
         new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-            // Go to OnboardingActivity
-            startActivity(new Intent(this, OnboardingActivity.class));
+            android.content.SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+            boolean shown = prefs.getBoolean("onboarding_shown", false);
+            Class<?> next = shown ? MainActivity.class : OnboardingActivity.class;
+            startActivity(new Intent(this, next));
             finish();
         }, 2500);
     }

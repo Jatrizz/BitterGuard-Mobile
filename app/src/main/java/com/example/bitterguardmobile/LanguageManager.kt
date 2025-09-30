@@ -5,6 +5,8 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
 import java.util.*
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 
 object LanguageManager {
     private const val LANGUAGE_PREF = "language_pref"
@@ -33,6 +35,14 @@ object LanguageManager {
         
         // Update TranslationManager
         TranslationManager.setCurrentLanguage(languageCode)
+
+        // Apply locale app-wide only if changed, to avoid redundant recreations/flashes
+        val targetTags = if (languageCode == "tl") "tl" else "en"
+        val currentTags = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+        if (currentTags != targetTags) {
+            val locales = LocaleListCompat.forLanguageTags(targetTags)
+            AppCompatDelegate.setApplicationLocales(locales)
+        }
     }
     
     fun getLanguage(context: Context): String {

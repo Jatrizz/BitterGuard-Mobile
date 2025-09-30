@@ -24,6 +24,12 @@
     <color name="background_light">#FAFAFA</color>
     <color name="surface_white">#FFFFFF</color>
     
+    <!-- Theme-aware color attributes (light theme) -->
+    <color name="colorBackground">#FAFAFA</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorOnBackground">#212121</color>
+    <color name="colorOnSurface">#212121</color>
+    
     <!-- Status Colors -->
     <color name="success_green">#4CAF50</color>
     <color name="warning_orange">#FF9800</color>
@@ -42,4 +48,10 @@
     <color name="text_hint_dark">#61FFFFFF</color>
     <color name="card_background_dark">#2C2C2C</color>
     <color name="divider_dark">#333333</color>
+    
+    <!-- Additional dark theme colors for better contrast -->
+    <color name="primary_green_dark_theme">#81C784</color>
+    <color name="accent_dark_theme">#A5D6A7</color>
+    <color name="surface_variant_dark">#252525</color>
+    <color name="on_surface_variant_dark">#C7C7C7</color>
 </resources>

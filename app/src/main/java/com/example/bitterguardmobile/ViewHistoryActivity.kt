@@ -15,12 +15,14 @@ import androidx.cardview.widget.CardView
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.Toast
+import com.google.android.material.chip.Chip
 
 class ViewHistoryActivity : AppCompatActivity() {
     
     private lateinit var historyManager: HistoryManager
     private lateinit var historyAdapter: HistoryAdapter
     private var allHistoryItems: List<HistoryItem> = emptyList()
+    private var baseFilteredItems: List<HistoryItem> = emptyList()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,13 +33,13 @@ class ViewHistoryActivity : AppCompatActivity() {
 
         // Set up toolbar
         setSupportActionBar(findViewById(R.id.toolbar))
-        supportActionBar?.title = "Scan History"
+        supportActionBar?.title = getString(R.string.scan_history)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         
         // Add clear history button to toolbar
         supportActionBar?.setDisplayShowCustomEnabled(true)
         val clearButton = android.widget.Button(this)
-        clearButton.text = "Clear"
+        clearButton.text = getString(R.string.clear)
         clearButton.setTextColor(resources.getColor(android.R.color.white))
         clearButton.setOnClickListener {
             clearHistory()
@@ -53,12 +55,16 @@ class ViewHistoryActivity : AppCompatActivity() {
         
         // Load and display history
         loadHistory()
+        updateEmptyStateVisibility()
         
         historyAdapter = HistoryAdapter(allHistoryItems) { historyItem ->
             // Navigate to scan result when item is clicked
             navigateToScanResult(historyItem)
         }
         recyclerView.adapter = historyAdapter
+
+        // Wire up filter chips
+        setupChips()
     }
     
     private fun loadHistory() {
@@ -73,6 +79,8 @@ class ViewHistoryActivity : AppCompatActivity() {
                 place = scanResult.location
             )
         }
+        baseFilteredItems = allHistoryItems
+        updateEmptyStateVisibility()
     }
 
     private fun setupSearch() {
@@ -95,16 +103,58 @@ class ViewHistoryActivity : AppCompatActivity() {
     }
     
     private fun filterHistory(query: String) {
+        val source = baseFilteredItems
         val filteredItems = if (query.isBlank()) {
-            allHistoryItems
+            source
         } else {
-            allHistoryItems.filter { item ->
+            source.filter { item ->
                 item.prediction.contains(query, ignoreCase = true) ||
                 item.confidence.contains(query, ignoreCase = true) ||
                 item.place.contains(query, ignoreCase = true)
             }
         }
         historyAdapter.updateItems(filteredItems)
+    }
+
+    private fun setupChips() {
+        val chipAll = findViewById<Chip>(R.id.chipAll)
+        val chipHealthy = findViewById<Chip>(R.id.chipHealthy)
+        val chipDiseased = findViewById<Chip>(R.id.chipDiseased)
+        val chipToday = findViewById<Chip>(R.id.chipToday)
+
+        chipAll.setOnClickListener {
+            baseFilteredItems = allHistoryItems
+            applyCurrentFilters()
+        }
+
+        chipHealthy.setOnClickListener {
+            baseFilteredItems = allHistoryItems.filter { item ->
+                item.prediction.contains("healthy", ignoreCase = true)
+            }
+            applyCurrentFilters()
+        }
+
+        chipDiseased.setOnClickListener {
+            baseFilteredItems = allHistoryItems.filter { item ->
+                !item.prediction.contains("healthy", ignoreCase = true)
+            }
+            applyCurrentFilters()
+        }
+
+        chipToday.setOnClickListener {
+            val todayStr = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
+                .format(java.util.Date())
+            baseFilteredItems = allHistoryItems.filter { item ->
+                item.date == todayStr
+            }
+            applyCurrentFilters()
+        }
+    }
+
+    private fun applyCurrentFilters() {
+        val currentQuery = findViewById<EditText>(R.id.searchHistory).text?.toString() ?: ""
+        filterHistory(currentQuery)
+        updateEmptyStateVisibility()
     }
 
     private fun clearHistory() {
@@ -115,10 +165,15 @@ class ViewHistoryActivity : AppCompatActivity() {
                 historyManager.clearHistory()
                 loadHistory()
                 historyAdapter.updateItems(allHistoryItems)
-                Toast.makeText(this, "History cleared", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.history_cleared), Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun updateEmptyStateVisibility() {
+        val empty = findViewById<View>(R.id.emptyState)
+        empty.visibility = if (allHistoryItems.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun navigateToScanResult(historyItem: HistoryItem) {
@@ -131,9 +186,13 @@ class ViewHistoryActivity : AppCompatActivity() {
             timestamp = System.currentTimeMillis(), // We don't have original timestamp
             location = historyItem.place
         )
-        
+
+        // Use in-memory transfer to avoid large Intent extras
+        val transferKey = scanResult.id
+        ScanResultTransfer.put(transferKey, scanResult)
+
         val intent = Intent(this, ScanResultActivity::class.java).apply {
-            putExtra("scan_result", scanResult)
+            putExtra("transfer_key", transferKey)
         }
         startActivity(intent)
     }

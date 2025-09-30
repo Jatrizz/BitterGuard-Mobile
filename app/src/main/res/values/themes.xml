@@ -3,16 +3,51 @@
 
     <style name="Theme.BitterGuardMobile" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorPrimary">@color/primary_green</item>
+        <item name="colorPrimaryVariant">@color/primary_green_dark</item>
         <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_700</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <item name="colorSecondary">@color/accent_green</item>
+        <item name="colorSecondaryVariant">@color/primary_green_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <!-- Background & surface -->
+        <item name="android:windowBackground">@color/colorBackground</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+
+        <!-- Text colors for legacy views -->
+        <item name="android:textColorPrimary">@color/colorOnBackground</item>
+        <item name="android:textColorSecondary">@color/colorOnSurface</item>
+        <item name="android:textColorHint">@color/colorOnSurface</item>
+
+        <!-- Status bar -->
+        <item name="android:statusBarColor">@color/primary_green_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- Navigation bar -->
+        <item name="android:navigationBarColor">@color/colorSurface</item>
+        <item name="android:windowLightNavigationBar">true</item>
+
+        <!-- Card and other surfaces -->
+        <item name="colorOnBackground">@color/colorOnBackground</item>
+        <item name="colorError">@color/error_red</item>
+        <item name="colorOnError">@color/white</item>
+    </style>
+
+    <!-- Theme-aware styles for common UI elements -->
+    <style name="ThemeAwareCard" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/colorSurface</item>
+    </style>
+
+    <style name="ThemeAwareButton" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/primary_green</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="ThemeAwareTextView" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textColor">@color/colorOnSurface</item>
     </style>
 
 </resources>

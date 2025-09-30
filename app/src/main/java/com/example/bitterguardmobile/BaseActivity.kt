@@ -17,9 +17,19 @@ open class BaseActivity : AppCompatActivity() {
         
         // Apply theme settings
         ThemeManager.applySavedTheme(this)
-        
-        // Apply language settings
-        val languageCode = LanguageManager.getLanguage(this)
-        LanguageManager.setLanguage(this, languageCode)
+        // Locale is already applied in attachBaseContext; avoid reapplying here to prevent
+        // unnecessary activity recreations that can cause flicker during navigation.
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Suppress default activity transition animations to avoid flashing
+        overridePendingTransition(0, 0)
+    }
+
+    override fun finish() {
+        super.finish()
+        // Suppress exit animation as well
+        overridePendingTransition(0, 0)
     }
 } 

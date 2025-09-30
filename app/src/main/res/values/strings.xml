@@ -38,7 +38,7 @@
     <string name="scan">Scan</string>
     <string name="history">History</string>
     <string name="profile">Profile</string>
-    <string name="welcome_home">Welcome!</string>
+    <string name="welcome_home">Welcome 👋</string>
     <string name="scan_leaf_now">Scan leaf now</string>
     <string name="recent_scans">Recent scans</string>
     <string name="no_recent_scans">No recent scans</string>
@@ -90,12 +90,21 @@
     
     <!-- History -->
     <string name="scan_history">Scan History</string>
+    <string name="scan_analysis_complete">Scan Analysis Complete</string>
+    <string name="scan_details">Scan Details</string>
+    <string name="detection_result_header">DETECTION RESULT</string>
     <string name="date">Date</string>
     <string name="time">Time</string>
     <string name="location">Location</string>
     <string name="confidence">Confidence</string>
     <string name="prediction">Prediction</string>
     <string name="no_history">No history</string>
+    <string name="no_scan_history_yet">No scan history yet</string>
+    <string name="start_scanning_prompt">Start scanning leaves to see your history here</string>
+    <string name="all">All</string>
+    <string name="today">Today</string>
+    <string name="history_cleared">History cleared</string>
+    <string name="search_history_hint">Search history...</string>
     
     <!-- Disease Info -->
     <string name="disease_information">Disease Information</string>
@@ -119,6 +128,15 @@
     <string name="help_support">Help &amp; Support</string>
     <string name="contact_support">Contact Support</string>
     <string name="logout">Logout</string>
+    <string name="clear">CLEAR</string>
+    <string name="notifications_enabled">Notifications enabled</string>
+    <string name="notifications_disabled">Notifications disabled</string>
+    <string name="unable_open_location_settings">Unable to open Location settings</string>
+    <string name="forum_online_only">Forum is available online only</string>
+    <string name="theme">Theme</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="status">Status</string>
     
     <!-- About -->
     <string name="version_format">Version %s</string>

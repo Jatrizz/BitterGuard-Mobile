@@ -8,8 +8,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class ProfileActivity : BaseActivity() {
     
@@ -22,10 +25,11 @@ class ProfileActivity : BaseActivity() {
     
     // Profile display views
     private lateinit var userNameText: TextView
-    private lateinit var userEmailText: TextView
+    private lateinit var userPhoneText: TextView
     private lateinit var userLocationText: TextView
     private lateinit var totalScansText: TextView
     private lateinit var diseasesFoundText: TextView
+    private lateinit var recentActivityList: RecyclerView
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,10 +60,12 @@ class ProfileActivity : BaseActivity() {
         
         // Initialize profile display views
         userNameText = findViewById(R.id.userNameText)
-        userEmailText = findViewById(R.id.userEmailText)
+        userPhoneText = findViewById(R.id.userPhoneText)
         userLocationText = findViewById(R.id.userLocationText)
         totalScansText = findViewById(R.id.totalScansText)
         diseasesFoundText = findViewById(R.id.diseasesFoundText)
+        recentActivityList = findViewById(R.id.recentActivityList)
+        recentActivityList.layoutManager = LinearLayoutManager(this)
     }
     
     private fun loadUserData() {
@@ -67,17 +73,32 @@ class ProfileActivity : BaseActivity() {
         if (currentUser != null) {
             // Update UI with user data from Supabase
             userNameText.text = currentUser.name ?: "User"
-            userEmailText.text = currentUser.email
-            userLocationText.text = "📍 Location not set"
+            userPhoneText.text = currentUser.phone ?: "Phone not set"
+            
+            // Load location using shared service
+            loadUserLocation()
             
             // Load scan statistics
             loadScanStatistics()
+            loadRecentActivity()
         } else {
             // User not logged in, redirect to landing
             val intent = Intent(this, MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             finish()
+        }
+    }
+    
+    private fun loadUserLocation() {
+        lifecycleScope.launchWhenStarted {
+            try {
+                val locationString = LocationService.getLocationString(this@ProfileActivity)
+                userLocationText.text = "📍 $locationString"
+            } catch (e: Exception) {
+                Log.e("ProfileActivity", "Error loading location: ${e.message}")
+                userLocationText.text = "📍 Location not available"
+            }
         }
     }
     
@@ -90,6 +111,13 @@ class ProfileActivity : BaseActivity() {
         
         totalScansText.text = totalScans.toString()
         diseasesFoundText.text = diseasesFound.toString()
+    }
+
+    private fun loadRecentActivity() {
+        val scanHistory = historyManager.getScanHistory()
+        // Show last 10 items, newest first
+        val items = scanHistory.takeLast(10).asReversed()
+        recentActivityList.adapter = RecentActivityAdapter(items)
     }
     
     private fun setupClickListeners() {
@@ -120,7 +148,6 @@ class ProfileActivity : BaseActivity() {
         // Create a custom dialog layout
         val dialogView = layoutInflater.inflate(R.layout.dialog_edit_profile, null)
         val fullNameInput = dialogView.findViewById<android.widget.EditText>(R.id.editFullName)
-        val emailInput = dialogView.findViewById<android.widget.EditText>(R.id.editEmail)
         val phoneInput = dialogView.findViewById<android.widget.EditText>(R.id.editPhone)
         val locationInput = dialogView.findViewById<android.widget.EditText>(R.id.editLocation)
         
@@ -128,8 +155,7 @@ class ProfileActivity : BaseActivity() {
         val user = authManager.getCurrentUser()
         if (user != null) {
             fullNameInput.setText(user.name ?: "")
-            emailInput.setText(user.email ?: "")
-            phoneInput.setText("") // Phone not available in Supabase user model
+            phoneInput.setText(user.phone ?: "")
             locationInput.setText("") // Location not available in Supabase user model
         }
         
@@ -138,7 +164,6 @@ class ProfileActivity : BaseActivity() {
             .setView(dialogView)
             .setPositiveButton("Save") { dialog, _ ->
                 val fullName = fullNameInput.text.toString().trim()
-                val email = emailInput.text.toString().trim()
                 val phone = phoneInput.text.toString().trim()
                 val location = locationInput.text.toString().trim()
                 
@@ -147,7 +172,7 @@ class ProfileActivity : BaseActivity() {
                     return@setPositiveButton
                 }
                 
-                updateUserProfile(fullName, email, phone, location)
+                updateUserProfile(fullName, phone, location)
                 dialog.dismiss()
             }
             .setNegativeButton("Cancel") { dialog, _ ->
@@ -156,7 +181,7 @@ class ProfileActivity : BaseActivity() {
             .show()
     }
     
-    private fun updateUserProfile(fullName: String, email: String, phone: String, location: String) {
+    private fun updateUserProfile(fullName: String, phone: String, location: String) {
         val currentUser = authManager.getCurrentUser()
         if (currentUser == null) {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
@@ -166,7 +191,7 @@ class ProfileActivity : BaseActivity() {
         // TODO: Implement Supabase user profile update when needed
         // For now, just update the UI with the entered values
         userNameText.text = fullName
-        userEmailText.text = email
+        userPhoneText.text = phone.ifEmpty { "Phone not set" }
         userLocationText.text = "📍 $location"
         
         Toast.makeText(this, "Profile updated successfully! (Note: Supabase profile update coming soon)", Toast.LENGTH_SHORT).show()
@@ -249,28 +274,14 @@ class ProfileActivity : BaseActivity() {
     private fun showPrivacySettingsDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_privacy_settings, null)
         
-        // Initialize switches with current values
-        val locationDataSwitch = dialogView.findViewById<android.widget.Switch>(R.id.locationDataSwitch)
-        val analyticsDataSwitch = dialogView.findViewById<android.widget.Switch>(R.id.analyticsDataSwitch)
-        val profileVisibilitySwitch = dialogView.findViewById<android.widget.Switch>(R.id.profileVisibilitySwitch)
-        val scanHistorySharingSwitch = dialogView.findViewById<android.widget.Switch>(R.id.scanHistorySharingSwitch)
-        val dataRetentionSwitch = dialogView.findViewById<android.widget.Switch>(R.id.dataRetentionSwitch)
-        
-        // Load current settings
-        locationDataSwitch.isChecked = SettingsManager.isLocationDataEnabled()
-        analyticsDataSwitch.isChecked = SettingsManager.isAnalyticsDataEnabled()
-        profileVisibilitySwitch.isChecked = SettingsManager.isProfileVisibilityEnabled()
-        scanHistorySharingSwitch.isChecked = SettingsManager.isScanHistorySharingEnabled()
-        dataRetentionSwitch.isChecked = SettingsManager.isDataRetentionEnabled()
+        // (Simplified) No per-item privacy toggles
         
         // Set up click listeners
         dialogView.findViewById<android.widget.TextView>(R.id.clearAllDataButton).setOnClickListener {
             showClearAllDataDialog()
         }
         
-        dialogView.findViewById<android.widget.TextView>(R.id.exportDataButton).setOnClickListener {
-            exportUserData()
-        }
+        // Removed Export Data button per simplification
         
         dialogView.findViewById<android.widget.TextView>(R.id.viewPrivacyPolicyButton).setOnClickListener {
             showPrivacyPolicy()
@@ -280,14 +291,7 @@ class ProfileActivity : BaseActivity() {
             .setTitle("Privacy Settings")
             .setView(dialogView)
             .setPositiveButton("Save") { dialog, _ ->
-                // Save all settings
-                SettingsManager.setLocationDataEnabled(locationDataSwitch.isChecked)
-                SettingsManager.setAnalyticsDataEnabled(analyticsDataSwitch.isChecked)
-                SettingsManager.setProfileVisibilityEnabled(profileVisibilitySwitch.isChecked)
-                SettingsManager.setScanHistorySharingEnabled(scanHistorySharingSwitch.isChecked)
-                SettingsManager.setDataRetentionEnabled(dataRetentionSwitch.isChecked)
-                
-                Toast.makeText(this, "Privacy settings saved!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
             .setNegativeButton("Cancel") { dialog, _ ->
@@ -452,3 +456,32 @@ class ProfileActivity : BaseActivity() {
         return true
     }
 } 
+
+class RecentActivityAdapter(private val scans: List<ScanResult>) : RecyclerView.Adapter<RecentActivityAdapter.VH>() {
+    class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val title: TextView = itemView.findViewById(android.R.id.text1)
+        val subtitle: TextView = itemView.findViewById(android.R.id.text2)
+    }
+
+    override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): VH {
+        val ctx = parent.context
+        val container = android.widget.LinearLayout(ctx).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(16, 12, 16, 12)
+        }
+        val title = TextView(ctx).apply { id = android.R.id.text1; textSize = 14f; setTextColor(0xFF333333.toInt()); setTypeface(typeface, android.graphics.Typeface.BOLD) }
+        val subtitle = TextView(ctx).apply { id = android.R.id.text2; textSize = 12f; setTextColor(0xFF666666.toInt()) }
+        container.addView(title)
+        container.addView(subtitle)
+        return VH(container)
+    }
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val s = scans[position]
+        val status = s.prediction
+        holder.title.text = status
+        holder.subtitle.text = "${s.date} ${s.time} • ${s.location} • ${s.confidence}"
+    }
+
+    override fun getItemCount(): Int = scans.size
+}

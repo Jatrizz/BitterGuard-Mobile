@@ -3,6 +3,7 @@ package com.example.bitterguardmobile
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 
 object ThemeManager {
@@ -17,6 +18,11 @@ object ThemeManager {
         sharedPrefs.edit().putString(THEME_KEY, theme).apply()
         
         applyTheme(theme)
+        
+        // Restart current activity to apply theme changes smoothly
+        if (context is AppCompatActivity) {
+            context.recreate()
+        }
     }
     
     fun getCurrentTheme(context: Context): String {
@@ -35,5 +41,9 @@ object ThemeManager {
     fun applySavedTheme(context: Context) {
         val savedTheme = getCurrentTheme(context)
         applyTheme(savedTheme)
+    }
+    
+    fun isDarkTheme(context: Context): Boolean {
+        return getCurrentTheme(context) == THEME_DARK
     }
 }

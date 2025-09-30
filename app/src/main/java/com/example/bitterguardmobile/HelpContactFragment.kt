@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 
 class HelpContactFragment : Fragment() {
@@ -30,29 +31,28 @@ class HelpContactFragment : Fragment() {
             startActivity(Intent.createChooser(intent, getString(R.string.contact_support)))
         }
 
-        view.findViewById<LinearLayout>(R.id.contactWhatsApp).setOnClickListener {
-            val url = "https://wa.me/639123456789"
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        view.findViewById<LinearLayout>(R.id.contactPhoneJomarr).setOnClickListener {
+            val phone = "09984551432"
+            val intent = Intent(Intent.ACTION_DIAL).apply {
+                data = Uri.parse("tel:$phone")
+            }
+            startActivity(intent)
         }
 
-        view.findViewById<LinearLayout>(R.id.visitWebsite).setOnClickListener {
-            val url = "https://www.bitterguard.com"
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        view.findViewById<LinearLayout>(R.id.contactPhoneJanna).setOnClickListener {
+            val phone = "09480870179"
+            val intent = Intent(Intent.ACTION_DIAL).apply {
+                data = Uri.parse("tel:$phone")
+            }
+            startActivity(intent)
         }
 
-        view.findViewById<LinearLayout>(R.id.openFacebook).setOnClickListener {
-            val url = "https://www.facebook.com/bitterguard"
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        }
-
-        view.findViewById<LinearLayout>(R.id.openTwitter).setOnClickListener {
-            val url = "https://twitter.com/bitterguard"
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        }
-
-        view.findViewById<LinearLayout>(R.id.openInstagram).setOnClickListener {
-            val url = "https://instagram.com/bitterguard"
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        view.findViewById<LinearLayout>(R.id.contactPhoneJohn).setOnClickListener {
+            val phone = "09777741589"
+            val intent = Intent(Intent.ACTION_DIAL).apply {
+                data = Uri.parse("tel:$phone")
+            }
+            startActivity(intent)
         }
     }
 }

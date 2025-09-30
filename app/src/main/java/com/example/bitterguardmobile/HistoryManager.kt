@@ -20,7 +20,18 @@ class HistoryManager(private val context: Context) {
     }
     
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    private val authManager = SupabaseAuthManager(context)
     private val gson = Gson()
+    
+    /**
+     * Build a per-user key for storing history so each user only sees their own scans
+     */
+    private fun getUserScopedHistoryKey(): String {
+        val userId = authManager.getCurrentUser()?.id
+        // Use a stable fallback for guests or when no user is signed in
+        val suffix = if (!userId.isNullOrBlank()) userId else "guest"
+        return "${KEY_HISTORY}_$suffix"
+    }
     
     /**
      * Save a scan result to history
@@ -40,7 +51,7 @@ class HistoryManager(private val context: Context) {
             
             // Save to SharedPreferences
             val historyJson = gson.toJson(currentHistory)
-            sharedPreferences.edit().putString(KEY_HISTORY, historyJson).apply()
+            sharedPreferences.edit().putString(getUserScopedHistoryKey(), historyJson).apply()
             
             Log.d(TAG, "Scan result saved: ${scanResult.prediction} (${scanResult.confidence})")
         } catch (e: Exception) {
@@ -53,7 +64,7 @@ class HistoryManager(private val context: Context) {
      */
     fun getScanHistory(): List<ScanResult> {
         return try {
-            val historyJson = sharedPreferences.getString(KEY_HISTORY, "[]")
+            val historyJson = sharedPreferences.getString(getUserScopedHistoryKey(), "[]")
             val type = object : TypeToken<List<ScanResult>>() {}.type
             gson.fromJson(historyJson, type) ?: emptyList()
         } catch (e: Exception) {
@@ -80,7 +91,7 @@ class HistoryManager(private val context: Context) {
      * Clear all history
      */
     fun clearHistory() {
-        sharedPreferences.edit().remove(KEY_HISTORY).apply()
+        sharedPreferences.edit().remove(getUserScopedHistoryKey()).apply()
         Log.d(TAG, "Scan history cleared")
     }
     

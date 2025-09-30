@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="?android:attr/colorBackground"
     tools:context=".SettingsActivity">
 
     <!-- Toolbar -->
@@ -37,8 +37,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="👤 Account"
-                android:textColor="#4CAF50"
+                android:text="@string/recent_activity"
+                android:textColor="@color/primary_green"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="12dp" />
@@ -78,7 +78,7 @@
                             android:layout_marginStart="16dp"
                             android:layout_weight="1"
                             android:text="@string/notifications"
-                            android:textColor="#333333"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="16sp" />
 
                         <Switch
@@ -95,8 +95,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="⚙️ App Settings"
-                android:textColor="#4CAF50"
+                android:text="@string/system_settings"
+                android:textColor="@color/primary_green"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="12dp" />
@@ -135,7 +135,7 @@
                             android:layout_marginStart="16dp"
                             android:layout_weight="1"
                             android:text="@string/language"
-                            android:textColor="#333333"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="16sp" />
 
                         <TextView
@@ -144,7 +144,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_vertical"
                             android:text="@string/english"
-                            android:textColor="#666666"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp" />
 
                         <ImageView
@@ -161,7 +161,7 @@
                         android:background="#E0E0E0" />
 
                     <LinearLayout
-                        android:id="@+id/themeSetting"
+                        android:id="@+id/locationSetting"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:clickable="true"
@@ -174,62 +174,15 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:layout_gravity="center_vertical"
-                            android:src="@android:drawable/ic_menu_view" />
+                            android:src="@android:drawable/ic_menu_mylocation" />
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
                             android:layout_weight="1"
-                            android:text="Theme"
-                            android:textColor="#333333"
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:text="Light"
-                            android:textColor="#666666"
-                            android:textSize="14sp" />
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="8dp"
-                            android:src="@android:drawable/ic_media_play" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#E0E0E0" />
-
-                    <LinearLayout
-                        android:id="@+id/configSetting"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        android:orientation="horizontal"
-                        android:padding="16dp"
-                        android:visibility="gone">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center_vertical"
-                            android:src="@android:drawable/ic_menu_preferences" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:text="App Configuration"
-                            android:textColor="#333333"
+                            android:text="@string/location"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="16sp" />
 
                         <ImageView
@@ -240,84 +193,8 @@
                             android:src="@android:drawable/ic_media_play" />
                     </LinearLayout>
 
-                    <View
-                        android:id="@+id/configDivider"
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#E0E0E0"
-                        android:visibility="gone" />
 
-                    <LinearLayout
-                        android:id="@+id/translationSetting"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        android:orientation="horizontal"
-                        android:padding="16dp"
-                        android:visibility="visible">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center_vertical"
-                            android:src="@android:drawable/ic_menu_edit" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:text="Translation Management"
-                            android:textColor="#333333"
-                            android:textSize="16sp" />
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="8dp"
-                            android:src="@android:drawable/ic_media_play" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#E0E0E0" />
-
-                    <LinearLayout
-                        android:id="@+id/autoScanSetting"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center_vertical"
-                            android:src="@drawable/camera" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:text="Auto-scan Mode"
-                            android:textColor="#333333"
-                            android:textSize="16sp" />
-
-                        <Switch
-                            android:id="@+id/autoScanSwitch"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:checked="false" />
-                    </LinearLayout>
+                    
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -325,8 +202,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ℹ️ Support &amp; About"
-                android:textColor="#4CAF50"
+                android:text="@string/help_support"
+                android:textColor="@color/primary_green"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="12dp" />
@@ -364,8 +241,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
                             android:layout_weight="1"
-                            android:text="Help &amp; Support"
-                            android:textColor="#333333"
+                            android:text="@string/help_support"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="16sp" />
 
                         <ImageView
@@ -402,7 +279,7 @@
                             android:layout_marginStart="16dp"
                             android:layout_weight="1"
                             android:text="@string/about"
-                            android:textColor="#333333"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="16sp" />
 
                         <ImageView

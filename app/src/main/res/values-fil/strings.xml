@@ -35,7 +35,7 @@
     <string name="scan">I-scan</string>
     <string name="history">Kasaysayan</string>
     <string name="profile">Profile</string>
-    <string name="welcome_home">Maligayang pagdating!</string>
+    <string name="welcome_home">Maligayang pagdating 👋</string>
     <string name="scan_leaf_now">I-scan ang dahon ngayon</string>
     <string name="recent_scans">Mga kamakailang scan</string>
     <string name="no_recent_scans">Walang kamakailang scan</string>
@@ -87,12 +87,21 @@
     
     <!-- History -->
     <string name="scan_history">Kasaysayan ng Scan</string>
+    <string name="scan_analysis_complete">Tapos na ang Pagsusuri</string>
+    <string name="scan_details">Mga Detalye ng Scan</string>
+    <string name="detection_result_header">RESULTA NG DETEKSIYON</string>
     <string name="date">Petsa</string>
     <string name="time">Oras</string>
     <string name="location">Lokasyon</string>
     <string name="confidence">Kumpiyansa</string>
     <string name="prediction">Prediksyon</string>
     <string name="no_history">Walang kasaysayan</string>
+    <string name="no_scan_history_yet">Wala pang kasaysayan ng scan</string>
+    <string name="start_scanning_prompt">Mag-scan ng mga dahon para makita ang kasaysayan dito</string>
+    <string name="all">Lahat</string>
+    <string name="today">Ngayon</string>
+    <string name="history_cleared">Nalinis ang kasaysayan</string>
+    <string name="search_history_hint">Maghanap sa kasaysayan...</string>
     
     <!-- Disease Info -->
     <string name="disease_information">Impormasyon sa Sakit</string>
@@ -118,6 +127,14 @@
     <string name="notifications">Mga Notipikasyon</string>
     <string name="about">Tungkol</string>
     <string name="logout">Mag-logout</string>
+    <string name="clear">LINISIN</string>
+    <string name="notifications_enabled">Naka-enable ang mga notipikasyon</string>
+    <string name="notifications_disabled">Naka-disable ang mga notipikasyon</string>
+    <string name="unable_open_location_settings">Hindi mabuksan ang Location settings</string>
+    <string name="forum_online_only">Available lamang ang forum kapag online</string>
+    <string name="theme">Tema</string>
+    <string name="light">Maliwanag</string>
+    <string name="status">Status</string>
     
     <!-- About -->
     <string name="version_format">Version %s</string>

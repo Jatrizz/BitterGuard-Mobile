@@ -26,6 +26,7 @@ class MainActivity : BaseActivity() {
         }
 
         btnContinueOffline.setOnClickListener {
+            getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("offline_mode", true).apply()
             val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
             finish()

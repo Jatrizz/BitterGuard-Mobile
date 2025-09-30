@@ -9,16 +9,27 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import android.Manifest
 
 class RegisterActivity : AppCompatActivity() {
 
 	private var authManager: SupabaseAuthManager? = null
+    private lateinit var requestLocationPermissionLauncher: androidx.activity.result.ActivityResultLauncher<String>
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_register)
 
 		authManager = if (SupabaseConfig.isConfigured()) SupabaseAuthManager(this) else null
+
+        // Prepare location permission launcher (asked after successful registration)
+        requestLocationPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
+                // We navigate to Home regardless; Home will show real location if granted, placeholders otherwise
+                navigateToHome()
+            }
 
 		val inputFullName = findViewById<EditText>(R.id.inputFullName)
 		val inputPhone = findViewById<EditText>(R.id.inputPhone)
@@ -51,6 +62,8 @@ class RegisterActivity : AppCompatActivity() {
                 runOnUiThread {
                     btnRegister.isEnabled = true
                     if (result.success) {
+                        // Clear offline flag on successful registration
+                        getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("offline_mode", false).apply()
                         Toast.makeText(this@RegisterActivity, "Account created!", Toast.LENGTH_SHORT).show()
                         // Upsert into users/profiles on background thread
                         val manager = authManager
@@ -117,8 +130,8 @@ class RegisterActivity : AppCompatActivity() {
                             }
                         }
 
-						startActivity(Intent(this@RegisterActivity, HomeActivity::class.java))
-						finish()
+                        // Ask for location permission on first run to personalize weather/location
+                        promptForLocationPermissionThenNavigate()
 					} else {
 						Toast.makeText(this@RegisterActivity, result.error ?: "Registration failed", Toast.LENGTH_LONG).show()
 					}
@@ -131,9 +144,29 @@ class RegisterActivity : AppCompatActivity() {
 		}
 
 		btnOffline.setOnClickListener {
+			getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("offline_mode", true).apply()
 			startActivity(Intent(this, HomeActivity::class.java))
 			finish()
 		}
+	}
+
+	private fun promptForLocationPermissionThenNavigate() {
+		AlertDialog.Builder(this)
+			.setTitle("Enable Location?")
+			.setMessage("Allow location access to show your city and real-time temperature. You can change this later in Settings.")
+			.setPositiveButton("Allow") { _, _ ->
+				requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+			}
+			.setNegativeButton("Not now") { _, _ ->
+				navigateToHome()
+			}
+			.setCancelable(false)
+			.show()
+	}
+
+	private fun navigateToHome() {
+		startActivity(Intent(this@RegisterActivity, HomeActivity::class.java))
+		finish()
 	}
 
 	private fun synthesizeEmailFromPhone(phone: String): String {
